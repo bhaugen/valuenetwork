@@ -1,7 +1,7 @@
 valuenetwork
 =====================
 
-A prototype of Value Network Accounting, being developed in collaboration with http://www.sensorica.co/ , a pioneering example.
+A prototype of Value Network Accounting, being developed in collaboration with http://www.sensorica.co/ , a pioneering value network.
 
 Background on Value Networks: http://www.sensorica.co/value-networks
 
