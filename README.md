@@ -1,9 +1,11 @@
-pinax-project-account
+valuenetwork
 =====================
 
-a starter project the incorporates account features from django-user-accounts
+A prototype of Value Network Accounting, being developed in collaboration with http://www.sensorica.co/ , a pioneering example.
 
+Background on Value Networks: http://www.sensorica.co/value-networks
 
-To Use::
+The prototype used the https://github.com/pinax/pinax-project-account starter project, built on the Django framework.
 
-    $ django-admin.py startproject [your_project_name] --template=https://github.com/pinax/pinax-project-account/zipball/master .
+Developer doc to come.  User doc probably much later.
+
