@@ -40,8 +40,18 @@ class Unit(models.Model):
         return self.abbrev
 
 
+SIZE_CHOICES = (
+    ('individual', _('individual')),
+    ('org', _('organization')),
+    ('network', _('network')),
+)
+
 class AgentType(models.Model):
     name = models.CharField(_('name'), max_length=128)
+    active = models.BooleanField(_('active'), default=True)
+    size = models.CharField(_('size'), 
+        max_length=12, choices=SIZE_CHOICES,
+        default='individual')
 
     class Meta:
         ordering = ('name',)
@@ -166,7 +176,7 @@ RESOURCE_EFFECT_CHOICES = (
 
 class EventType(models.Model):
     name = models.CharField(_('name'), max_length=128)
-    resource_effect = unit_type = models.CharField(_('resource effect'), 
+    resource_effect = models.CharField(_('resource effect'), 
         max_length=12, choices=RESOURCE_EFFECT_CHOICES)
     unit_type = models.CharField(_('unit type'), max_length=12, choices=UNIT_TYPE_CHOICES)
     slug = models.SlugField(_("Page name"), editable=False)
