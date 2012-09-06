@@ -137,6 +137,7 @@ INSTALLED_APPS = [
     "metron",
     'debug_toolbar',
     'django_extensions',
+    'south',
     
     # project
     'valuenetwork.valueaccounting',
