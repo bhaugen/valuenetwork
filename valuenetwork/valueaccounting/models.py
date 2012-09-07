@@ -4,6 +4,7 @@ from decimal import *
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ValidationError
 
 from valuenetwork.valueaccounting.utils import *
 
@@ -292,6 +293,8 @@ class Compensation(models.Model):
     that is, one event can be compensated by many other events,
     and the other events can compensate many initiating events.
 
+    Compensation is an REA Duality.
+
     """
     initiating_event = models.ForeignKey(EconomicEvent, 
         related_name="initiated_compensations", verbose_name=_('initiating event'))
@@ -299,5 +302,26 @@ class Compensation(models.Model):
         related_name="compensations", verbose_name=_('compensating event'))
     compensation_date = models.DateField(_('compensation date'))
     compensating_value = models.DecimalField(_('compensating value'), max_digits=8, decimal_places=2)
-  
+
+    class Meta:
+        ordering = ('compensation_date',)
+
+    def __unicode__(self):
+        value_string = '$' + str(self.compensating_value)
+        return ' '.join([
+            'inititating event:',
+            self.initiating_event.__unicode__(),
+            'compensating event:',
+            self.compensating_event.__unicode__(),
+            'value:',
+            quantity_string,
+        ])
+
+    def clean(self):
+        if self.initiating_event.from_agent.id != self.compensating_event.to_agent.id:
+            raise ValidationError('Initiating event from_agent must be the compensating event to_agent.')
+        if self.initiating_event.to_agent.id != self.compensating_event.from_agent.id:
+            raise ValidationError('Initiating event to_agent must be the compensating event from_agent.')
+        if self.initiating_event.unit_of_value.id != self.compensating_event.unit_of_value.id:
+            raise ValidationError('Initiating event and compensating event must have the same units of value.')
 
