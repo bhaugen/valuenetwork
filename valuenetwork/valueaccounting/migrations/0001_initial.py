@@ -8,22 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'ValueEquation'
-        db.create_table('valueaccounting_valueequation', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('base_rate', self.gf('django.db.models.fields.DecimalField')(max_digits=8, decimal_places=2)),
-            ('role_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('importance_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('quality_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('accountability_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('regularity_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('reputation_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('risk_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('commitment_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-            ('seniority_weight', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
-        ))
-        db.send_create_signal('valueaccounting', ['ValueEquation'])
-
         # Adding model 'Unit'
         db.create_table('valueaccounting_unit', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -38,6 +22,8 @@ class Migration(SchemaMigration):
         db.create_table('valueaccounting_agenttype', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('size', self.gf('django.db.models.fields.CharField')(default='individual', max_length=12)),
         ))
         db.send_create_signal('valueaccounting', ['AgentType'])
 
@@ -111,7 +97,9 @@ class Migration(SchemaMigration):
         db.create_table('valueaccounting_role', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('factor', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=4)),
+            ('rate', self.gf('django.db.models.fields.DecimalField')(default='0.00', max_digits=6, decimal_places=2)),
+            ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='roles_created', null=True, to=orm['auth.User'])),
+            ('changed_by', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='roles_changed', null=True, to=orm['auth.User'])),
             ('slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
         ))
         db.send_create_signal('valueaccounting', ['Role'])
@@ -127,8 +115,10 @@ class Migration(SchemaMigration):
             ('resource_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='events', to=orm['valueaccounting.EconomicResourceType'])),
             ('resource', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='events', null=True, to=orm['valueaccounting.EconomicResource'])),
             ('process', self.gf('django.db.models.fields.related.ForeignKey')(related_name='events', to=orm['valueaccounting.Process'])),
-            ('amount', self.gf('django.db.models.fields.DecimalField')(max_digits=8, decimal_places=2)),
-            ('unit', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='event_units', null=True, to=orm['valueaccounting.Unit'])),
+            ('quantity', self.gf('django.db.models.fields.DecimalField')(max_digits=8, decimal_places=2)),
+            ('unit_of_quantity', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='event_qty_units', null=True, to=orm['valueaccounting.Unit'])),
+            ('value', self.gf('django.db.models.fields.DecimalField')(max_digits=8, decimal_places=2)),
+            ('unit_of_value', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='event_value_units', null=True, to=orm['valueaccounting.Unit'])),
             ('notes', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='events_created', null=True, to=orm['auth.User'])),
             ('changed_by', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='events_changed', null=True, to=orm['auth.User'])),
@@ -136,11 +126,18 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('valueaccounting', ['EconomicEvent'])
 
+        # Adding model 'Compensation'
+        db.create_table('valueaccounting_compensation', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('initiating_event', self.gf('django.db.models.fields.related.ForeignKey')(related_name='initiated_compensations', to=orm['valueaccounting.EconomicEvent'])),
+            ('compensating_event', self.gf('django.db.models.fields.related.ForeignKey')(related_name='compensations', to=orm['valueaccounting.EconomicEvent'])),
+            ('compensation_date', self.gf('django.db.models.fields.DateField')()),
+            ('compensating_value', self.gf('django.db.models.fields.DecimalField')(max_digits=8, decimal_places=2)),
+        ))
+        db.send_create_signal('valueaccounting', ['Compensation'])
+
 
     def backwards(self, orm):
-        # Deleting model 'ValueEquation'
-        db.delete_table('valueaccounting_valueequation')
-
         # Deleting model 'Unit'
         db.delete_table('valueaccounting_unit')
 
@@ -170,6 +167,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'EconomicEvent'
         db.delete_table('valueaccounting_economicevent')
+
+        # Deleting model 'Compensation'
+        db.delete_table('valueaccounting_compensation')
 
 
     models = {
@@ -211,8 +211,18 @@ class Migration(SchemaMigration):
         },
         'valueaccounting.agenttype': {
             'Meta': {'ordering': "('name',)", 'object_name': 'AgentType'},
+            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'size': ('django.db.models.fields.CharField', [], {'default': "'individual'", 'max_length': '12'})
+        },
+        'valueaccounting.compensation': {
+            'Meta': {'object_name': 'Compensation'},
+            'compensating_event': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'compensations'", 'to': "orm['valueaccounting.EconomicEvent']"}),
+            'compensating_value': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
+            'compensation_date': ('django.db.models.fields.DateField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'initiating_event': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'initiated_compensations'", 'to': "orm['valueaccounting.EconomicEvent']"})
         },
         'valueaccounting.economicagent': {
             'Meta': {'ordering': "('name',)", 'object_name': 'EconomicAgent'},
@@ -227,7 +237,6 @@ class Migration(SchemaMigration):
         },
         'valueaccounting.economicevent': {
             'Meta': {'ordering': "('event_date',)", 'object_name': 'EconomicEvent'},
-            'amount': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
             'changed_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'events_changed'", 'null': 'True', 'to': "orm['auth.User']"}),
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'events_created'", 'null': 'True', 'to': "orm['auth.User']"}),
             'event_date': ('django.db.models.fields.DateField', [], {}),
@@ -237,11 +246,14 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'process': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'events'", 'to': "orm['valueaccounting.Process']"}),
+            'quantity': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
             'resource': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'events'", 'null': 'True', 'to': "orm['valueaccounting.EconomicResource']"}),
             'resource_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'events'", 'to': "orm['valueaccounting.EconomicResourceType']"}),
             'slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'to_agent': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'taken_events'", 'to': "orm['valueaccounting.EconomicAgent']"}),
-            'unit': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'event_units'", 'null': 'True', 'to': "orm['valueaccounting.Unit']"})
+            'unit_of_quantity': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'event_qty_units'", 'null': 'True', 'to': "orm['valueaccounting.Unit']"}),
+            'unit_of_value': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'event_value_units'", 'null': 'True', 'to': "orm['valueaccounting.Unit']"}),
+            'value': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'})
         },
         'valueaccounting.economicresource': {
             'Meta': {'ordering': "('resource_type', 'identifier')", 'object_name': 'EconomicResource'},
@@ -288,9 +300,11 @@ class Migration(SchemaMigration):
         },
         'valueaccounting.role': {
             'Meta': {'ordering': "('name',)", 'object_name': 'Role'},
-            'factor': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
+            'changed_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'roles_changed'", 'null': 'True', 'to': "orm['auth.User']"}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'roles_created'", 'null': 'True', 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'rate': ('django.db.models.fields.DecimalField', [], {'default': "'0.00'", 'max_digits': '6', 'decimal_places': '2'}),
             'slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'})
         },
         'valueaccounting.unit': {
@@ -300,20 +314,6 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'symbol': ('django.db.models.fields.CharField', [], {'max_length': '1', 'blank': 'True'}),
             'unit_type': ('django.db.models.fields.CharField', [], {'max_length': '12'})
-        },
-        'valueaccounting.valueequation': {
-            'Meta': {'object_name': 'ValueEquation'},
-            'accountability_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'base_rate': ('django.db.models.fields.DecimalField', [], {'max_digits': '8', 'decimal_places': '2'}),
-            'commitment_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'importance_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'quality_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'regularity_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'reputation_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'risk_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'role_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'}),
-            'seniority_weight': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '4'})
         }
     }
 
