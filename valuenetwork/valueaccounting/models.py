@@ -8,19 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 from valuenetwork.valueaccounting.utils import *
 
 
-class ValueEquation(models.Model):
-    base_rate = models.DecimalField(_('base rate'), max_digits=8, decimal_places=2)
-    role_weight = models.DecimalField(_('role weight'), max_digits=6, decimal_places=4)
-    importance_weight = models.DecimalField(_('importance weight'), max_digits=6, decimal_places=4)
-    quality_weight = models.DecimalField(_('quality weight'), max_digits=6, decimal_places=4)
-    accountability_weight = models.DecimalField(_('accountability weight'), max_digits=6, decimal_places=4)
-    regularity_weight = models.DecimalField(_('regularity weight'), max_digits=6, decimal_places=4)
-    reputation_weight = models.DecimalField(_('reputation weight'), max_digits=6, decimal_places=4)
-    risk_weight = models.DecimalField(_('risk weight'), max_digits=6, decimal_places=4)
-    commitment_weight = models.DecimalField(_('commitment weight'), max_digits=6, decimal_places=4)
-    seniority_weight = models.DecimalField(_('seniority weight'), max_digits=6, decimal_places=4)
-
-
 UNIT_TYPE_CHOICES = (
     ('quantity', _('quantity')),
     ('time', _('time')),
@@ -191,9 +178,14 @@ class EventType(models.Model):
         unique_slugify(self, self.name)
         super(EventType, self).save(*args, **kwargs)
 
+
 class Role(models.Model):
     name = models.CharField(_('name'), max_length=128)
-    factor = models.DecimalField(_('factor'), max_digits=6, decimal_places=4)
+    rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    created_by = models.ForeignKey(User, verbose_name=_('created by'),
+        related_name='roles_created', blank=True, null=True)
+    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
+        related_name='roles_changed', blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:
