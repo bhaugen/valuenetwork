@@ -161,7 +161,7 @@ class Process(models.Model):
         slug = "-".join([
             self.process_type.name,
             self.name,
-            self.event_date.strftime('%Y-%m-%d'),
+            self.start_date.strftime('%Y-%m-%d'),
         ])
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
@@ -170,6 +170,7 @@ class Process(models.Model):
 RESOURCE_EFFECT_CHOICES = (
     ('+', _('increase')),
     ('-', _('decrease')),
+    ('xfer', _('transfer')),
     ('none', _('no effect')),
 )
 
@@ -266,14 +267,14 @@ class EconomicEvent(models.Model):
         unique_slugify(self, slug)
         super(EconomicEvent, self).save(*args, **kwargs)
 
-    def compensations(self):
+    def my_compensations(self):
         return self.initiated_compensations.all()
 
     def compensation(self):
-        return sum(c.compensating_value for c in self.compensations())
+        return sum(c.compensating_value for c in self.my_compensations())
 
     def value_due(self):
-        return self.value - self.compensation
+        return self.value - self.compensation()
 
     def is_compensated(self):
         if self.value_due() > 0:
@@ -314,10 +315,11 @@ class Compensation(models.Model):
             'compensating event:',
             self.compensating_event.__unicode__(),
             'value:',
-            quantity_string,
+            value_string,
         ])
 
     def clean(self):
+        #import pdb; pdb.set_trace()
         if self.initiating_event.from_agent.id != self.compensating_event.to_agent.id:
             raise ValidationError('Initiating event from_agent must be the compensating event to_agent.')
         if self.initiating_event.to_agent.id != self.compensating_event.from_agent.id:
