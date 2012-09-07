@@ -46,10 +46,17 @@ admin.site.register(Process, ProcessAdmin)
 
 class EconomicEventAdmin(admin.ModelAdmin):
     date_hierarchy = 'event_date'
-    list_display = ('event_type', 'event_date', 'from_agent', 'to_agent', 'resource_type', 'resource', 'process', 'amount')
+    list_display = ('event_type', 'event_date', 'from_agent', 'to_agent', 'resource_type', 'resource', 'process', 'quantity', 'value')
     list_filter = ['event_type', 'from_agent', 'to_agent', 'resource_type', 'process',]
     search_fields = ['name', 'event_type__name', 'from_agent__name', 'to_agent__name', 'resource_type__name']
     
 admin.site.register(EconomicEvent, EconomicEventAdmin)
+
+
+class CompensationAdmin(admin.ModelAdmin):
+    list_display = ('initiating_event', 'compensating_event', 'compensation_date', 'compensating_value')
+    search_fields = ['initiating_event__from_agent__name', 'initiating_event__to_agent__name']
+    
+admin.site.register(Compensation, CompensationAdmin)
 
 
