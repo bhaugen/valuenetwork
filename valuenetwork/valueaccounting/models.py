@@ -7,6 +7,17 @@ from django.utils.translation import ugettext_lazy as _
 
 from valuenetwork.valueaccounting.utils import *
 
+"""Models based on REA
+
+These models are based on the Bill McCarthy's Resource-Event-Agent accounting model:
+https://www.msu.edu/~mccarth4/
+http://en.wikipedia.org/wiki/Resources,_events,_agents_(accounting_model)
+
+REA is also the basis for ISO/IEC FDIS 15944-4 ACCOUNTING AND ECONOMIC ONTOLOGY
+http://global.ihs.com/doc_detail.cfm?item_s_key=00495115&item_key_date=920616
+
+"""
+
 
 UNIT_TYPE_CHOICES = (
     ('quantity', _('quantity')),
@@ -202,7 +213,7 @@ class Role(models.Model):
 class EconomicEvent(models.Model):
     event_type = models.ForeignKey(EventType, 
         related_name="events", verbose_name=_('event type'))
-    event_date = models.DateField(_('transaction date'))
+    event_date = models.DateField(_('event date'))
     from_agent = models.ForeignKey(EconomicAgent, 
         related_name="given_events", verbose_name=_('from'))
     from_agent_role = models.ForeignKey(Role, 
@@ -216,9 +227,12 @@ class EconomicEvent(models.Model):
         verbose_name=_('resource'), related_name='events')
     process = models.ForeignKey(Process, 
         verbose_name=_('process'), related_name='events')
-    amount = models.DecimalField(_('amount'), max_digits=8, decimal_places=2)
-    unit = models.ForeignKey(Unit, blank=True, null=True,
-        verbose_name=_('unit'), related_name="event_units")
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
+    unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit of quantity'), related_name="event_qty_units")
+    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2)
+    unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit of value'), related_name="event_value_units")
     notes = models.TextField(_('notes'), null=True, blank=True)
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
         related_name='events_created', blank=True, null=True)
@@ -230,7 +244,7 @@ class EconomicEvent(models.Model):
         ordering = ('event_date',)
 
     def __unicode__(self):
-        amount_string = '$' + str(self.amount)
+        quantity_string = '$' + str(self.quantity)
         return ' '.join([
             self.event_type.name,
             self.event_date.strftime('%Y-%m-%d'),
@@ -238,7 +252,7 @@ class EconomicEvent(models.Model):
             self.from_agent.name,
             'to',
             self.to_agent.name,
-            amount_string,
+            quantity_string,
             self.resource_type.name,
         ])
 
@@ -250,4 +264,40 @@ class EconomicEvent(models.Model):
         ])
         unique_slugify(self, slug)
         super(EconomicEvent, self).save(*args, **kwargs)
+
+    def compensations(self):
+        return self.initiated_compensations.all()
+
+    def compensation(self):
+        return sum(c.compensating_value for c in self.compensations())
+
+    def value_due(self):
+        return self.value - self.compensation
+
+    def is_compensated(self):
+        if self.value_due() > 0:
+            return False
+        return True
+
+
+class Compensation(models.Model):
+    """One EconomicEvent compensating another.
+
+    The EconomicAgents in the exchanging events
+    must be opposites.  
+    That is, the from_agent of one event must be
+    the to-agent of the other event, and vice versa.
+    Both events must use the same unit of value.
+    Compensation events have a M:M relationship:
+    that is, one event can be compensated by many other events,
+    and the other events can compensate many initiating events.
+
+    """
+    initiating_event = models.ForeignKey(EconomicEvent, 
+        related_name="initiated_compensations", verbose_name=_('initiating event'))
+    compensating_event = models.ForeignKey(EconomicEvent, 
+        related_name="compensations", verbose_name=_('compensating event'))
+    compensation_date = models.DateField(_('compensation date'))
+    compensating_value = models.DecimalField(_('compensating value'), max_digits=8, decimal_places=2)
+  
 
