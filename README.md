@@ -16,11 +16,12 @@ Roadmap:
 * Deploy on Web server so Sensorica members can experiment with it.
 * Import Sensorica spreadsheet data.
 * Create interfaces for members to enter contributions.
-* Create an interface for members to experiment with value equations.
+* Create an interface for members to experiment with value equations and income distributions.
 * Create a pluggable English vocabulary.
 * Translate the UI into French.
 * Create visualizations in the system.
 * Create exports of combined data for visualizations and reports outside the system.
+* Add a reversion system (version tracking and undo) for data changes.
 
 Longer term:
 * Create a protocol for nodes in a federated value system to communicate and transact with one another.
