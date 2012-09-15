@@ -21,7 +21,7 @@ Roadmap:
 * Translate the UI into French.
 * Create visualizations in the system.
 * Create exports of combined data for visualizations and reports outside the system.
-* Add a reversion system (version tracking and undo) for data changes.
+* Add a reversion system (revision tracking and undo) for data changes.
 
 Longer term:
 * Create a protocol for nodes in a federated value system to communicate and transact with one another.

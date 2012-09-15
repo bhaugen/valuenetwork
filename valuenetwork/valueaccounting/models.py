@@ -39,16 +39,30 @@ class Unit(models.Model):
         return self.abbrev
 
 
+ACTIVITY_CHOICES = (
+    ('active', _('active contributor')),
+    ('affiliate', _('close affiliate')),
+    ('inactive', _('inactive contributor')),
+    ('agent', _('active agent')),
+    ('passive', _('passive agent')),
+)
+
 SIZE_CHOICES = (
     ('individual', _('individual')),
     ('org', _('organization')),
     ('network', _('network')),
+    ('project', _('project')),
+    ('community', _('community')),
 )
 
 class AgentType(models.Model):
     name = models.CharField(_('name'), max_length=128)
-    active = models.BooleanField(_('active'), default=True)
-    size = models.CharField(_('size'), 
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub-agents')
+    member_type = models.CharField(_('member type'), 
+        max_length=12, choices=ACTIVITY_CHOICES,
+        default='active')
+    party_type = models.CharField(_('party type'), 
         max_length=12, choices=SIZE_CHOICES,
         default='individual')
 
@@ -61,22 +75,26 @@ class AgentType(models.Model):
 
 class EconomicAgent(models.Model):
     name = models.CharField(_('name'), max_length=255)
+    nick = models.CharField(_('ID'), max_length=32, unique=True)
+    url = models.CharField(_('url'), max_length=255, blank=True)
     agent_type = models.ForeignKey(AgentType,
         verbose_name=_('agent type'), related_name='agents')
     description = models.TextField(_('description'), blank=True, null=True)
     address = models.CharField(_('address'), max_length=255, blank=True)
+    email = models.EmailField(_('email address'), max_length=96, blank=True, null=True)
     latitude = models.FloatField(_('latitude'), default=0.0, blank=True, null=True)
     longitude = models.FloatField(_('longitude'), default=0.0, blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
+    created_date = models.DateField(_('created date'))
     
     class Meta:
-        ordering = ('name',)
+        ordering = ('nick',)
     
     def __unicode__(self):
-        return self.name
+        return self.nick
     
     def save(self, *args, **kwargs):
-        unique_slugify(self, self.name)
+        unique_slugify(self, self.nick)
         super(EconomicAgent, self).save(*args, **kwargs)
 
 
@@ -103,6 +121,7 @@ class EconomicResource(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='resources')
     identifier = models.CharField(_('identifier'), max_length=128)
+    url = models.CharField(_('url'), max_length=255, blank=True)
     owner = models.ForeignKey(EconomicAgent, related_name="owned_resources",
         verbose_name=_('owner'), blank=True, null=True)
     custodian = models.ForeignKey(EconomicAgent, related_name="custody_resources",
@@ -140,8 +159,11 @@ class ProcessType(models.Model):
 
 class Process(models.Model):
     name = models.CharField(_('name'), max_length=128)
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub-processes')
     process_type = models.ForeignKey(ProcessType,
         verbose_name=_('process type'), related_name='processes')
+    url = models.CharField(_('url'), max_length=255, blank=True)
     start_date = models.DateField(_('start date'))
     end_date = models.DateField(_('end date'), blank=True, null=True)
     managed_by = models.ForeignKey(EconomicAgent, related_name="managed_processes",
@@ -165,6 +187,25 @@ class Process(models.Model):
         ])
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
+
+class Project(models.Model):
+    name = models.CharField(_('name'), max_length=128) 
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub-projects')  
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='children')
+    slug = models.SlugField(_("Page name"), editable=False)
+    
+    class Meta:
+        ordering = ('name',)
+    
+    def __unicode__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        unique_slugify(self, self.name)
+        super(Project, self).save(*args, **kwargs)
+
 
 
 RESOURCE_EFFECT_CHOICES = (
@@ -216,26 +257,34 @@ class EconomicEvent(models.Model):
     event_type = models.ForeignKey(EventType, 
         related_name="events", verbose_name=_('event type'))
     event_date = models.DateField(_('event date'))
-    from_agent = models.ForeignKey(EconomicAgent, 
+    from_agent = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
         related_name="given_events", verbose_name=_('from'))
-    from_agent_role = models.ForeignKey(Role, 
+    from_agent_role = models.ForeignKey(Role,
+        blank=True, null=True,
         verbose_name=_('role'), related_name='events')
-    to_agent = models.ForeignKey(EconomicAgent, 
+    to_agent = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
         related_name="taken_events", verbose_name=_('to'))
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='events')
     resource = models.ForeignKey(EconomicResource, 
         blank=True, null=True,
         verbose_name=_('resource'), related_name='events')
-    process = models.ForeignKey(Process, 
+    process = models.ForeignKey(Process,
+        blank=True, null=True,
         verbose_name=_('process'), related_name='events')
+    project = models.ForeignKey(Project,
+        blank=True, null=True,
+        verbose_name=_('project'), related_name='events')
+    url = models.CharField(_('url'), max_length=255, blank=True)
+    description = models.TextField(_('description'), null=True, blank=True)
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of quantity'), related_name="event_qty_units")
     value = models.DecimalField(_('value'), max_digits=8, decimal_places=2)
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of value'), related_name="event_value_units")
-    notes = models.TextField(_('notes'), null=True, blank=True)
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
         related_name='events_created', blank=True, null=True)
     changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
@@ -324,6 +373,6 @@ class Compensation(models.Model):
             raise ValidationError('Initiating event from_agent must be the compensating event to_agent.')
         if self.initiating_event.to_agent.id != self.compensating_event.from_agent.id:
             raise ValidationError('Initiating event to_agent must be the compensating event from_agent.')
-        if self.initiating_event.unit_of_value.id != self.compensating_event.unit_of_value.id:
-            raise ValidationError('Initiating event and compensating event must have the same units of value.')
+        #if self.initiating_event.unit_of_value.id != self.compensating_event.unit_of_value.id:
+        #    raise ValidationError('Initiating event and compensating event must have the same units of value.')
 

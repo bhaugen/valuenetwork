@@ -181,41 +181,6 @@ class CompensationTest(TestCase):
             #import pdb; pdb.set_trace()
             self.assertEqual(e.message_dict.values()[0][0], u'Initiating event to_agent must be the compensating event from_agent.')
 
-    def test_mismatched_value_units(self):
-
-        unit = Unit(
-            unit_type="quantity",
-            abbrev="KG",
-            name="Kilograms",
-        )
-        self.unit.save()
-
-        event3 = EconomicEvent(
-            event_type=self.e_type,
-            event_date = datetime.date.today(),
-            from_agent=self.agent_B,
-            from_agent_role=self.role,
-            to_agent=self.agent_A,
-            resource_type=self.r_type,
-            process=self.process,
-            quantity=Decimal("10.00"),
-            unit_of_quantity=unit,
-            value=Decimal("10.00"),
-            unit_of_value=unit,
-        )
-        event3.save()
-
-        compensation= Compensation(
-            initiating_event=self.event1,
-            compensating_event=event3,
-            compensation_date = datetime.date.today(),
-            compensating_value=Decimal("10.00"),
-        )
-        try:
-            compensation.full_clean()
-        except ValidationError, e:
-            #import pdb; pdb.set_trace()
-            self.assertEqual(e.message_dict.values()[0][0], u'Initiating event and compensating event must have the same units of value.')
 
 
 

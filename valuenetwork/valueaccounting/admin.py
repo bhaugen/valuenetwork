@@ -12,7 +12,7 @@ admin.site.register(Role)
 
 
 class EconomicAgentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'agent_type', 'description', 'address')
+    list_display = ('nick', 'name', 'agent_type', 'url', 'address', 'email', 'created_date')
     list_filter = ['agent_type',]
     search_fields = ['name', 'address']
     
