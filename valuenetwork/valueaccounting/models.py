@@ -282,7 +282,8 @@ class EconomicEvent(models.Model):
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of quantity'), related_name="event_qty_units")
-    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2)
+    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of value'), related_name="event_value_units")
     created_by = models.ForeignKey(User, verbose_name=_('created by'),

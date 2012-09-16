@@ -47,7 +47,7 @@ admin.site.register(Process, ProcessAdmin)
 class EconomicEventAdmin(admin.ModelAdmin):
     date_hierarchy = 'event_date'
     list_display = ('event_type', 'event_date', 'from_agent', 'to_agent', 'resource_type', 'resource', 'process', 'quantity', 'value')
-    list_filter = ['event_type', 'from_agent', 'to_agent', 'resource_type', 'process',]
+    list_filter = ['event_type', 'project', 'resource_type', 'from_agent', 'to_agent',]
     search_fields = ['name', 'event_type__name', 'from_agent__name', 'to_agent__name', 'resource_type__name']
     
 admin.site.register(EconomicEvent, EconomicEventAdmin)
