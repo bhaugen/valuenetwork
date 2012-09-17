@@ -16,22 +16,21 @@
         <div class="row">
             <div class="span4">
             {% block column-1 %}
-                <h2>Topic 1 Heading</h2>
-                <p>Topic 1 content</p>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                <h2>Projects</h2>
+                <p>SENSORICA Projects and their contributions.</p>
+                <p><a class="btn" href="{% url projects %}">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-2 %}
-                <h2>Topic 2 Heading</h2>
-                <p>Topic 2 content</p>
-                <p><a class="btn" href="#">View details &raquo;</a></p>
+                <h2>Log your contribution</h2>
+                <p><a class="btn" href="{% url log_time %}">Log time contributions &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-3 %}
-                <h2>topic 3 Heading</h2>
-                <p>Topic 3 content</p>
+                <h2>Value Equation</h2>
+                <p>Collaborate on figuring out the value equation formula for time contributions</p>
                 <p><a class="btn" href="#">View details &raquo;</a></p>
             {% endblock %}
             </div>

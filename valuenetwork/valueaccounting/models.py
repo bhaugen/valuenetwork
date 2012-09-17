@@ -84,6 +84,8 @@ class EconomicAgent(models.Model):
     email = models.EmailField(_('email address'), max_length=96, blank=True, null=True)
     latitude = models.FloatField(_('latitude'), default=0.0, blank=True, null=True)
     longitude = models.FloatField(_('longitude'), default=0.0, blank=True, null=True)
+    reputation = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.00"))
     slug = models.SlugField(_("Page name"), editable=False)
     created_date = models.DateField(_('created date'))
     
@@ -126,6 +128,11 @@ class EconomicResource(models.Model):
         verbose_name=_('owner'), blank=True, null=True)
     custodian = models.ForeignKey(EconomicAgent, related_name="custody_resources",
         verbose_name=_('custodian'), blank=True, null=True)
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, 
+        default=Decimal("1.00"))
+    unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit of quantity'), related_name="resource_qty_units")
+    quality = models.DecimalField(_('quality'), max_digits=3, decimal_places=0, default=Decimal("0"))
     created_date = models.DateField(_('created date'))
 
     class Meta:
@@ -191,9 +198,8 @@ class Process(models.Model):
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub-projects')  
-    parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='children')
+        verbose_name=_('parent'), related_name='sub_projects')  
+    importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("0"))
     slug = models.SlugField(_("Page name"), editable=False)
     
     class Meta:
@@ -206,7 +212,16 @@ class Project(models.Model):
         unique_slugify(self, self.name)
         super(Project, self).save(*args, **kwargs)
 
+    def time_contributions(self):
+        et = EventType.objects.get(name='Time Contribution')
+        return sum(event.quantity for event in self.events.filter(
+            event_type=et))
 
+    def contributions(self):
+        return sum(event.quantity for event in self.events.all())
+
+    def contributions_count(self):
+        return self.events.all().count()
 
 RESOURCE_EFFECT_CHOICES = (
     ('+', _('increase')),
@@ -281,7 +296,8 @@ class EconomicEvent(models.Model):
     description = models.TextField(_('description'), null=True, blank=True)
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
-        verbose_name=_('unit of quantity'), related_name="event_qty_units")
+        verbose_name=_('unit'), related_name="event_qty_units")
+    quality = models.DecimalField(_('quality'), max_digits=3, decimal_places=0, default=Decimal("0"))
     value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
         default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
@@ -297,13 +313,19 @@ class EconomicEvent(models.Model):
 
     def __unicode__(self):
         quantity_string = '$' + str(self.quantity)
+        from_agt = 'None'
+        if self.from_agent:
+            from_agt = self.from_agent.name
+        to_agt = 'None'
+        if self.to_agent:
+            to_agt = self.to_agent.name
         return ' '.join([
             self.event_type.name,
             self.event_date.strftime('%Y-%m-%d'),
             'from',
-            self.from_agent.name,
+            from_agt,
             'to',
-            self.to_agent.name,
+            to_agt,
             quantity_string,
             self.resource_type.name,
         ])
@@ -330,6 +352,9 @@ class EconomicEvent(models.Model):
         if self.value_due() > 0:
             return False
         return True
+
+    def quantity_formatted(self):
+        return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
 
 
 class Compensation(models.Model):

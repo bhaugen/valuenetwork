@@ -7,7 +7,6 @@ admin.site.add_action(export_as_csv, 'export_selected objects')
 admin.site.register(Unit)
 admin.site.register(AgentType)
 admin.site.register(ProcessType)
-admin.site.register(EventType)
 admin.site.register(Role)
 
 
@@ -27,6 +26,12 @@ class EconomicResourceTypeAdmin(admin.ModelAdmin):
 admin.site.register(EconomicResourceType, EconomicResourceTypeAdmin)
 
 
+class EventTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'resource_effect', 'unit_type' )
+
+admin.site.register(EventType, EventTypeAdmin)
+
+
 class EconomicResourceAdmin(admin.ModelAdmin):
     list_display = ('identifier', 'resource_type', 'owner', 'custodian')
     list_filter = ['owner', 'custodian']
@@ -43,11 +48,19 @@ class ProcessAdmin(admin.ModelAdmin):
     
 admin.site.register(Process, ProcessAdmin)
 
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'parent')
+    list_filter = ['parent',]
+    search_fields = ['name',]
+    
+admin.site.register(Project, ProjectAdmin)
+
 
 class EconomicEventAdmin(admin.ModelAdmin):
     date_hierarchy = 'event_date'
-    list_display = ('event_type', 'event_date', 'from_agent', 'to_agent', 'resource_type', 'resource', 'process', 'quantity', 'value')
-    list_filter = ['event_type', 'project', 'resource_type', 'from_agent', 'to_agent',]
+    list_display = ('event_type', 'event_date', 'from_agent', 'from_agent_role', 'project', 
+        'resource_type', 'quantity', 'unit_of_quantity', 'description', 'url', 'quality')
+    list_filter = ['event_type', 'project', 'from_agent_role', 'from_agent', ]
     search_fields = ['name', 'event_type__name', 'from_agent__name', 'to_agent__name', 'resource_type__name']
     
 admin.site.register(EconomicEvent, EconomicEventAdmin)
