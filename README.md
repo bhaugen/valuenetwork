@@ -19,7 +19,9 @@ Roadmap:
 * Create an interface for members to experiment with value equations and income distributions.
 * Create a pluggable English vocabulary.
 * Translate the UI into French.
-* Create visualizations in the system.
+* Create visualizations in the system.  Here are some examples of network visualizations:
+    * http://locecon.org/
+    * http://locecon.org/clusters/network/11/
 * Create exports of combined data for visualizations and reports outside the system.
 * Add a reversion system (revision tracking and undo) for data changes.
 
