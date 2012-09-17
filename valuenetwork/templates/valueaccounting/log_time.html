@@ -75,19 +75,19 @@ text {
 			<ul>
 				{% for root in roots %}
 				<li>
-					<input type="radio" name="{{ root }}" /> {{ root }}
+					<input type="radio" name="project" /> {{ root }}
 				</li>
 				{% if root.sub_projects.all %}
 					<ul>
 						{% for kid in root.sub_projects.all %}
 						<li> 
-							<input type="radio" name="{{ kid }}" /> {{ kid }}
+							<input type="radio" name="project" /> {{ kid }}
 						</li>
 							{% if kid.sub_projects.all %}
 								<ul>
 									{% for grandkid in kid.sub_projects.all %}
 									<li>
-										<input type="radio" name="{{ grandkid }}" /> {{ grandkid }}
+										<input type="radio" name="project" /> {{ grandkid }}
 									</li>
 									{% endfor %}
 								</ul>
@@ -105,7 +105,7 @@ text {
 			<ul>
 				{% for role in roles %}
 				<li>
-					<input type="radio" name="{{ role }}" /> {{ role }}
+					<input type="radio" name="role" /> {{ role }}
 				</li>
 			{% endfor %}
 
