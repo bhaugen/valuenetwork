@@ -55,10 +55,13 @@ def contributions(request, project_id):
 
 def log_time(request):
     nick = request.user.username
-    try:
-        member = EconomicAgent.objects.get(nick=nick.capitalize)
-    except EconomicAgent.DoesNotExist:
-        member = get_object_or_404(EconomicAgent, nick=nick)
+    if nick:
+        try:
+            member = EconomicAgent.objects.get(nick=nick.capitalize)
+        except EconomicAgent.DoesNotExist:
+            member = get_object_or_404(EconomicAgent, nick=nick)
+    else:
+        member = "Unregistered"
     form = TimeForm()
     roots = Project.objects.filter(parent=None)
     roles = Role.objects.all()
