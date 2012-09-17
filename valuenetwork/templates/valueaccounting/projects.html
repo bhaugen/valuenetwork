@@ -1,0 +1,45 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Projects" %}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>Projects</h1>
+		<ul>
+			{% for root in roots %}
+				<li>
+					<b>{{ root }}</b> 
+					<a href="{% url contributions project_id=root.id %}">Contributions: {{ root.contributions_count }}</a>
+				</li>
+				{% if root.sub_projects.all %}
+					<ul>
+						{% for kid in root.sub_projects.all %}
+							<li>
+								<b>{{ kid }}</b> 
+								<a href="{% url contributions project_id=kid.id %}">Contributions: {{ kid.contributions_count }}</a>
+							</li>
+							{% if kid.sub_projects.all %}
+								<ul>
+									{% for grandkid in kid.sub_projects.all %}
+										<li>
+											<b>{{ grandkid }}</b> 
+											<a href="{% url contributions project_id=grandkid.id %}">Contributions: {{ grandkid.contributions_count }}</a>
+										</li>
+									{% endfor %}
+								</ul>
+							{% endif %}
+						{% endfor %}
+					</ul>
+				{% endif %}
+			{% endfor %}
+		</ul>
+
+	</div>
+    </div>
+{% endblock %}

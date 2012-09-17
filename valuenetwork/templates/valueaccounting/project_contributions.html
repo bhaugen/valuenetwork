@@ -1,0 +1,105 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Project Contributions for " %} {{ project }}{% endblock %}
+
+{% block extra_head %}
+<style>
+
+	table
+	{
+		font-size: 100%; 
+		border-collapse: collapse; 
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;	
+	}
+
+	th
+	{
+		font-weight: bold;
+		color: gray;
+		background-color:#EAF2D3;
+		text-align: left;
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	td
+	{
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	th, td
+	{
+		padding-left:5px;
+	}
+
+	tr.even td 
+	{
+		color:#000000;
+		background-color:#EAF2D3;
+	}
+
+</style>
+
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>{% trans "Project Contributions for " %} {{ project }}</h1>
+		<table style="width: 100%;" >
+			<thead>
+				<th>Date</th>
+				<th>Type</th>
+				<th>From</th>
+				<th>Role</th>
+				<th>Resource Type</th>
+				<th>Qty</th>
+				<th>Unit</th>
+				<th>URL</th>
+				<th>Description</th>
+			</thead>
+			<tbody>	
+				{% for event in events %}
+					<tr class="{% cycle 'odd' 'even' %}">
+						<td>{{ event.event_date }}</td>
+						<td>{{ event.event_type }}</td>
+						<td>{{ event.from_agent }}</td>
+						<td>{{ event.from_agent_role }}</td>
+						<td>{{ event.resource_type }}</td>
+						<td style="text-align: right;" >{{ event.quantity_formatted }}</td>
+						<td>{{ event.unit_of_quantity }}</td>
+						<td>{{ event.url|urlize }}</td>
+						<td>{{ event.description|urlize }}</td>
+					</tr>
+				{% endfor %}
+			<tbody>	
+		</table>
+<div class="pagination">
+    <span class="step-links">
+        {% if events.has_previous %}
+            <a href="?page={{ events.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ events.number }} of {{ events.paginator.num_pages }}.
+        </span>
+
+        {% if events.has_next %}
+            <a href="?page={{ events.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
+	</div>
+    </div>
+{% endblock %}

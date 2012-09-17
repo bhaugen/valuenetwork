@@ -1,0 +1,119 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load url from future %}
+{% load bootstrap_tags %}
+
+
+{% block head_title %}{% trans "Log Your Time Contributions" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+
+	ul
+	{
+		list-style-type: none;
+	}
+	li
+
+input,
+textarea {
+  width: 400px;
+}
+
+input,
+text {
+  width: 400px;
+}
+
+</style>
+
+{% endblock %}
+
+{% block body_class %}log{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+		<h1>{% trans "Log Time Contributions for " %} {{ member.nick }}</h1>
+
+		<p>
+			This is just a mockup for discussion; it does not work yet.  But it is intended to be an easy-to-use Timer.
+		</p>
+		<p>
+			How it could work: when you select a Project and Role and enter a Description and URL (optional) and click "Start", it will start a time contribution at the current time.  Whenever you change any of that information, it will end and post one time contribution and start another.  When you click Stop, it will post the last time contribution.
+		</p>
+		<p>
+			Alternatively, you could click Start and then add Description, URL, select Project and Role, etc.  Then you could change those information elements until you clicked Stop or Start again.  (In that case, the Start button should probably move up above Description.)
+		</p>
+		<p>
+			Which way do you think would be easier?
+		</p>
+		<p>
+			It could also become a popup or smartphone app.
+		</p>
+
+<div style="border: 2px solid grey; padding-left: 1em;">
+
+	<form method="POST" action="">
+		{% csrf_token %}
+		<div style="float:left; width: 40%; ">
+	        <legend>Log Time</legend>
+
+		    {{ form|as_bootstrap }}
+
+		    <div class="form-actions">
+		        <button class="btn btn-primary" type="submit">Start</button>
+		    </div>
+
+		    <div class="form-actions">
+		        <button class="btn btn-primary" type="submit">Stop</button>
+		    </div>
+		</div>
+
+		<div style="float:left; padding-left: 1em; ">
+			<legend>Select a Project</legend>
+			<ul>
+				{% for root in roots %}
+				<li>
+					<input type="radio" name="{{ root }}" /> {{ root }}
+				</li>
+				{% if root.sub_projects.all %}
+					<ul>
+						{% for kid in root.sub_projects.all %}
+						<li> 
+							<input type="radio" name="{{ kid }}" /> {{ kid }}
+						</li>
+							{% if kid.sub_projects.all %}
+								<ul>
+									{% for grandkid in kid.sub_projects.all %}
+									<li>
+										<input type="radio" name="{{ grandkid }}" /> {{ grandkid }}
+									</li>
+									{% endfor %}
+								</ul>
+							{% endif %}
+						{% endfor %}
+					</ul>
+				{% endif %}
+			{% endfor %}
+
+			</ul>
+		</div>
+
+		<div style="float:left; padding-left: 1em; ">
+			<legend>Select a Role</legend>
+			<ul>
+				{% for role in roles %}
+				<li>
+					<input type="radio" name="{{ role }}" /> {{ role }}
+				</li>
+			{% endfor %}
+
+			</ul>
+		</div>
+
+		<div style="clear:both;"></div>
+	</form>
+</div>
+    </div>
+{% endblock %}
