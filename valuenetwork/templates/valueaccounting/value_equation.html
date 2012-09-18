@@ -1,0 +1,132 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Value Time Contributions for " %} {{ project }}{% endblock %}
+
+{% block extra_head %}
+<style>
+
+textarea {
+  width: 800px;
+}
+
+	table
+	{
+		font-size: 100%; 
+		border-collapse: collapse; 
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;	
+	}
+
+	th
+	{
+		font-weight: bold;
+		color: gray;
+		background-color:#EAF2D3;
+		text-align: left;
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	td
+	{
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	th, td
+	{
+		padding-left:5px;
+	}
+
+	tr.even td 
+	{
+		color:#000000;
+		background-color:#EAF2D3;
+	}
+
+</style>
+
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>{% trans "Value Time Contributions for " %} {{ project }}</h1>
+
+		<form>
+			<p>
+				Enter an equation using the parameters hours, rate, reputation, and seniority, and the operators +, -, * and /. 
+				</br>The result will be the value of the time contribution.
+        	</p>
+
+			<p>
+				Your equation will be saved along with its results, so that the community can decide on which equation to use.
+			</p>
+			
+			<div style="float: left;">
+				<textarea rows="4" cols="60"></textarea>
+			</div>
+			<div style="float: left; padding-left: 1em;">
+				<p>This is another mockup that does not work yet.</p>
+				<input id="submit" type="submit" value="Compute values" />
+			</div>
+			<div style="clear:both;"></div>
+
+		</form>
+
+	<div style="float: left; width: 60%">
+		<table style="width: 100%;" >
+			<thead>
+				<th>Member</th>
+				<th>Role</th>
+				<th>Role Rate</th>
+				<th>Hours</th>
+				<th>Reputation</th>
+				<th>Seniority</th>
+				<th>Value</th>
+			</thead>
+			<tbody>	
+				{% for event in events %}
+					<tr class="{% cycle 'odd' 'even' %}">
+						<td>{{ event.agent }}</td>
+						<td>{{ event.role }}</td>
+						<td style="text-align: right;" >{{ event.role.rate }}</td>
+						<td style="text-align: right;" >{{ event.quantity_formatted }}</td>
+						<td style="text-align: right;" >{{ event.agent.reputation }}</td>
+						<td style="text-align: right;" >{{ event.agent.seniority }}</td>
+						<td style="text-align: right;" >{{ event.value }}</td>
+					</tr>
+				{% endfor %}
+			<tbody>	
+		</table>
+		<div class="pagination">
+			<span class="step-links">
+				{% if events.has_previous %}
+				    <a href="?page={{ events.previous_page_number }}">previous</a>
+				{% endif %}
+
+				<span class="current">
+				    Page {{ events.number }} of {{ events.paginator.num_pages }}.
+				</span>
+
+				{% if events.has_next %}
+				    <a href="?page={{ events.next_page_number }}">next</a>
+				{% endif %}
+			</span>
+		</div>
+	</div>
+	<div style="float: left; padding-left: 1em;">
+		<p>This will be a chart of relative contribution values per member.</p>
+	</div>
+	<div style="clear:both;"></div>
+
+    </div>
+{% endblock %}

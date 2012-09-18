@@ -99,6 +99,9 @@ class EconomicAgent(models.Model):
         unique_slugify(self, self.nick)
         super(EconomicAgent, self).save(*args, **kwargs)
 
+    def seniority(self):
+        return (datetime.date.today() - self.created_date).days
+
 
 class EconomicResourceType(models.Model):
     name = models.CharField(_('name'), max_length=128)    

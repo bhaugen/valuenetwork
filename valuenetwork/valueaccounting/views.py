@@ -71,3 +71,48 @@ def log_time(request):
         "roots": roots,
         "roles": roles,
     }, context_instance=RequestContext(request))
+
+
+class EventSummary(object):
+    def __init__(self, agent, role, quantity, value=Decimal('0.0')):
+        self.agent = agent
+        self.role = role
+        self.quantity = quantity
+        self.value=value
+
+    def key(self):
+        return "".join([self.agent.nick, self.role.name])
+
+    def quantity_formatted(self):
+        return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
+
+
+def value_equation(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+    event_list = project.events.all()
+    summaries = {}
+    #import pdb; pdb.set_trace()
+    for event in event_list:
+        es = EventSummary(event.from_agent, event.from_agent_role, Decimal('0.0'))
+        if not es.key() in summaries:
+            summaries[es.key()] = es
+        summaries[es.key()].quantity += event.quantity
+    summaries = summaries.values()
+    summaries = sorted(summaries, key=attrgetter('agent.name',
+                                          'role.name'))    
+    paginator = Paginator(summaries, 30)
+
+    page = request.GET.get('page')
+    try:
+        events = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        events = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        events = paginator.page(paginator.num_pages)
+    
+    return render_to_response("valueaccounting/value_equation.html", {
+        "project": project,
+        "events": events,
+    }, context_instance=RequestContext(request))
