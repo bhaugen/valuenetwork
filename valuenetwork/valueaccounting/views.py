@@ -53,6 +53,28 @@ def contributions(request, project_id):
         "events": events,
     }, context_instance=RequestContext(request))
 
+def contribution_history(request, agent_id):
+    #import pdb; pdb.set_trace()
+    agent = get_object_or_404(EconomicAgent, pk=agent_id)
+    event_list = agent.given_events.all()
+    paginator = Paginator(event_list, 25)
+
+    page = request.GET.get('page')
+    try:
+        events = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        events = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        events = paginator.page(paginator.num_pages)
+    
+    return render_to_response("valueaccounting/agent_contributions.html", {
+        "agent": agent,
+        "events": events,
+    }, context_instance=RequestContext(request))
+
+
 def log_time(request):
     nick = request.user.username
     if nick:
