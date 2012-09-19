@@ -13,10 +13,11 @@ The valueaccounting app could be split out and used in other Django projects.
 
 Roadmap:
 
-* Deploy on Web server so Sensorica members can experiment with it.
-* Import Sensorica spreadsheet data.
-* Create interfaces for members to enter contributions.
-* Create an interface for members to experiment with value equations and income distributions.
+* Deploy on Web server so Sensorica members can experiment with it. 
+[done: http://valnet.webfactional.com/ ]
+* Import Sensorica spreadsheet data. [done]
+* Create interfaces for members to enter contributions. [mockup, awaiting feedback]
+* Create an interface for members to experiment with value equations and income distributions. [mockup, awaiting feedback]
 * Create a pluggable English vocabulary.
 * Translate the UI into French.
 * Create visualizations in the system.  Here are some examples of network visualizations:
