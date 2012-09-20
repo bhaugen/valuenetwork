@@ -19,7 +19,7 @@ admin.site.register(EconomicAgent, EconomicAgentAdmin)
 
 
 class EconomicResourceTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'parent')
+    list_display = ('name', 'parent', 'materiality')
     list_filter = ['parent',]
     search_fields = ['name',]
     

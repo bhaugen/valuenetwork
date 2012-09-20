@@ -51,7 +51,7 @@ SIZE_CHOICES = (
     ('individual', _('individual')),
     ('org', _('organization')),
     ('network', _('network')),
-    ('project', _('project')),
+    ('team', _('project team')),
     ('community', _('community')),
 )
 
@@ -103,13 +103,23 @@ class EconomicAgent(models.Model):
         return (datetime.date.today() - self.created_date).days
 
 
+MATERIALITY_CHOICES = (
+    ('material', _('material')),
+    ('intellectual', _('intellectual')),
+    ('time-based', _('time-based')),
+)
+
+
 class EconomicResourceType(models.Model):
     name = models.CharField(_('name'), max_length=128)    
     parent = models.ForeignKey('self', blank=True, null=True, 
         verbose_name=_('parent'), related_name='children')
-    slug = models.SlugField(_("Page name"), editable=False)
+    materiality = models.CharField(_('materiality'), 
+        max_length=12, choices=MATERIALITY_CHOICES,
+        default='material')
     unit = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="resource_units")
+    slug = models.SlugField(_("Page name"), editable=False)
     
     class Meta:
         ordering = ('name',)
@@ -201,7 +211,13 @@ class Process(models.Model):
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub_projects')  
+        verbose_name=_('parent'), related_name='sub_projects')
+    project_team = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="project_team", verbose_name=_('project team'))
+    main_process = models.ForeignKey(Process,
+        blank=True, null=True,
+        verbose_name=_('main process'), related_name='project_process')
     importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("0"))
     slug = models.SlugField(_("Page name"), editable=False)
     
