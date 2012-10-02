@@ -1,0 +1,108 @@
+{% load staticfiles %}
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="{% static "js/raphael-min.js" %}"></script>
+<script type="text/javascript" src="{% static "js/dracula_graffle.js" %}"></script>
+<script type="text/javascript" src="{% static "js/dracula_graph.js" %}"></script>
+
+<script type="text/javascript">
+
+var redraw, g, renderer;
+
+/* only do all this when document has finished loading (needed for RaphaelJS) */
+
+$(document).ready(function() {
+	
+	$(".tog").change(function() 
+	{
+		//$("#toggleForm").submit();
+		this.form.submit();
+	});
+	
+    {% if use_window_size %}
+		var width = $(document).width() - 50;
+		var height = $(document).height() - 100;
+	{% else %}
+		var width = $('#canvas').width();
+		var height = $('#canvas').height();
+	{% endif %}
+	
+	   var render = function(r, n) {
+            /* the Raphael set is obligatory, containing all you want to display */
+			if(n.label)
+			{
+				var lbl = n.label;
+				lbl = lbl.split(' ').join('\n');
+				n.label = lbl;
+			}
+			if(n.id.indexOf("Resource") >= 0 || n.id.indexOf("Agent") >= 0)
+			{
+				var set = r.set().push(
+					r.rect(n.point[0]-30, n.point[1]-13, 60, 44, 6).attr({"stroke": n.color, "stroke-width": 2 })).push(
+					r.text(n.point[0], n.point[1] + 10, (n.label || n.id)));
+			}
+			else
+			{
+				var set = r.set().push(
+					r.ellipse(n.point[0]-30, n.point[1]-13, 40, 25).attr({"fill": "#FFF8DC", "stroke-width": 2 })).push(
+					r.text(n.point[0]-30, n.point[1]-10, (n.label || n.id)));	
+			}
+            return set;
+        };
+    
+    g = new Graph();
+	
+
+	{% for node in nodes %}
+		g.addNode( "{{ node.node_id }}", {label: "{{ node.name|safe }}", color: "{{ node.color }}", render:render } );
+	{% endfor %}
+
+	{% comment %}
+	{% for node in nodes %}
+		{% for nx in node.next %}
+			g.addEdge( "{{ node.node_id}}" , "{{ nx.node_id }}", 
+				{ directed : true, weight: 1, stroke : "{{ node.color }}" , fill : "{{ node.color }}", "stroke-width": 5 } );
+		{% endfor %}
+	{% endfor %}
+	{% endcomment %}
+	
+	{% for edge in edges %}
+		{% if edge.from_node.color == "blue" %} // from_node is a process
+			g.addEdge( "{{ edge.from_node.node_id}}" , "{{ edge.to_node.node_id }}", 
+				{ 
+					directed : true, 
+					label : "{{ edge.label }}",
+					weight: 1, 
+					stroke : "{{ edge.from_node.color }}" , 
+					fill : "{{ edge.from_node.color }}|{{ edge.width }}" 
+				} 
+			);
+		{% else %} // from_node is a resource
+			g.addEdge( "{{ edge.from_node.node_id}}" , "{{ edge.to_node.node_id }}", 
+				{ 
+					directed : true, 
+					label : "{{ edge.label }}",
+					weight: 1, 
+					stroke : "{{ edge.to_node.color }}" , 
+					fill : "{{ edge.to_node.color }}|{{ edge.width }}" 
+				} 
+			);	
+		{% endif %}
+	{% endfor %}
+ 
+    /* layout the graph using the Spring layout implementation */
+    var layouter = new Graph.Layout.Spring(g);
+    
+    /* draw the graph using the RaphaelJS draw implementation */
+    renderer = new Graph.Renderer.Raphael('canvas', g, width, height);
+    
+    redraw = function() {
+        layouter.layout();
+        renderer.draw();
+    };
+
+});
+
+	
+</script>
+

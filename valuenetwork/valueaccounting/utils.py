@@ -80,9 +80,11 @@ class Edge(object):
      def __init__(self, from_node, to_node):
          self.from_node = from_node
          self.to_node = to_node
+         self.width = 1
 
 
 def explode(process_type, to_node, nodes, edges):
+    nodes.append(process_type)
     edges.append(Edge(process_type, to_node))
     for rt in process_type.consumed_resource_types():
         nodes.append(rt)

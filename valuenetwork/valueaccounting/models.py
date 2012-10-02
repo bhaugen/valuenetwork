@@ -110,6 +110,12 @@ class EconomicAgent(models.Model):
     def seniority(self):
         return (datetime.date.today() - self.created_date).days
 
+    def node_id(self):
+        return "-".join(["Agent", str(self.id)])
+
+    def color(self):
+        return "green"
+
 
 class AssociationType(models.Model):
     name = models.CharField(_('name'), max_length=128)
@@ -156,6 +162,12 @@ class EconomicResourceType(models.Model):
     def save(self, *args, **kwargs):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
+
+    def node_id(self):
+        return "-".join(["ResourceType", str(self.id)])
+
+    def color(self):
+        return "red"
 
     def producing_process_types(self):
         pts = self.process_types.filter(direction='produces')
@@ -247,6 +259,12 @@ class ProcessType(models.Model):
     def save(self, *args, **kwargs):
         unique_slugify(self, self.name)
         super(ProcessType, self).save(*args, **kwargs)
+
+    def node_id(self):
+        return "-".join(["ProcessType", str(self.id)])
+
+    def color(self):
+        return "blue"
 
     def produced_resource_types(self):
         ptrts = self.resource_types.filter(direction='produces')

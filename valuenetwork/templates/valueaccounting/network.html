@@ -1,0 +1,31 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load thumbnail %}
+
+{% block head_title %}{% trans "Value Network for " %} {{ resource_type }}{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>{% trans "Value Network for " %} {{ resource_type }}
+			{% if resource_type.photo %}
+			<img src="{% thumbnail resource_type.photo photo_size %}" />
+			{% endif %}
+		</h1>
+
+	</div>
+
+	<div id="canvas"></div>
+
+	{% include "valueaccounting/_network_diagram.html" %}
+
+    </div>
+{% endblock %}

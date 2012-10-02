@@ -146,3 +146,13 @@ def extended_bill(request, resource_type_id):
         "photo_size": (128, 128),
     }, context_instance=RequestContext(request))
 
+def network(request, resource_type_id):
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    nodes, edges = graphify(rt)
+    return render_to_response("valueaccounting/network.html", {
+        "resource_type": rt,
+        "photo_size": (128, 128),
+        "nodes": nodes,
+        "edges": edges,
+    }, context_instance=RequestContext(request))
+
