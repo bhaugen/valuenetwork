@@ -6,7 +6,6 @@ admin.site.add_action(export_as_csv, 'export_selected objects')
 
 admin.site.register(Unit)
 admin.site.register(AgentType)
-admin.site.register(ProcessType)
 admin.site.register(Role)
 
 
@@ -24,6 +23,32 @@ class EconomicResourceTypeAdmin(admin.ModelAdmin):
     search_fields = ['name',]
     
 admin.site.register(EconomicResourceType, EconomicResourceTypeAdmin)
+
+
+class AgentResourceTypeAdmin(admin.ModelAdmin):
+    list_display = ('agent', 'resource_type', 'direction')
+    list_filter = ['agent', 'resource_type']
+    
+admin.site.register(AgentResourceType, AgentResourceTypeAdmin)
+
+
+class ProcessTypeResourceTypeAdmin(admin.ModelAdmin):
+    list_display = ('process_type', 'resource_type', 'direction')
+    list_filter = ['process_type', 'resource_type']
+    
+admin.site.register(ProcessTypeResourceType, ProcessTypeResourceTypeAdmin)
+
+
+class ProcessTypeResourceTypeInline(admin.TabularInline):
+    model = ProcessTypeResourceType
+
+
+class ProcessTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', )
+    search_fields = ['name',]
+    inlines = [ ProcessTypeResourceTypeInline, ]
+
+admin.site.register(ProcessType, ProcessTypeAdmin)
 
 
 class EventTypeAdmin(admin.ModelAdmin):

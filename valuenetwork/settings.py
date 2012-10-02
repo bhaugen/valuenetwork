@@ -138,10 +138,13 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_extensions',
     'south',
+    'easy_thumbnails',
     
     # project
     'valuenetwork.valueaccounting',
 ]
+
+THUMBNAIL_DEBUG = True
 
 INTERNAL_IPS = ('127.0.0.1',)
 

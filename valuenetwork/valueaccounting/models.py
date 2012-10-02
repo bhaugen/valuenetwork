@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 
+from easy_thumbnails.fields import ThumbnailerImageField
+
 from valuenetwork.valueaccounting.utils import *
 
 """Models based on REA
@@ -21,9 +23,12 @@ http://global.ihs.com/doc_detail.cfm?item_s_key=00495115&item_key_date=920616
 
 
 UNIT_TYPE_CHOICES = (
+    ('length', _('length')),
     ('quantity', _('quantity')),
     ('time', _('time')),
     ('value', _('value')),
+    ('volume', _('volume')),
+    ('weight', _('weight')),
 )
  
 class Unit(models.Model):
@@ -45,6 +50,7 @@ ACTIVITY_CHOICES = (
     ('inactive', _('inactive contributor')),
     ('agent', _('active agent')),
     ('passive', _('passive agent')),
+    ('external', _('external agent')),
 )
 
 SIZE_CHOICES = (
@@ -84,8 +90,10 @@ class EconomicAgent(models.Model):
     email = models.EmailField(_('email address'), max_length=96, blank=True, null=True)
     latitude = models.FloatField(_('latitude'), default=0.0, blank=True, null=True)
     longitude = models.FloatField(_('longitude'), default=0.0, blank=True, null=True)
-    reputation = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, 
+    reputation = models.DecimalField(_('reputation'), max_digits=8, decimal_places=2, 
         default=Decimal("0.00"))
+    photo = ThumbnailerImageField(_("photo"),
+        upload_to='photos', blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
     created_date = models.DateField(_('created date'))
     
@@ -101,6 +109,20 @@ class EconomicAgent(models.Model):
 
     def seniority(self):
         return (datetime.date.today() - self.created_date).days
+
+
+class AssociationType(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+
+
+class AgentAssociation(models.Model):
+    from_agent = models.ForeignKey(EconomicAgent,
+        verbose_name=_('from'), related_name='associations_from')
+    to_agent = models.ForeignKey(EconomicAgent,
+        verbose_name=_('to'), related_name='associations_to')
+    association_type = models.ForeignKey(AssociationType,
+        verbose_name=_('association type'), related_name='associations')
+    description = models.TextField(_('description'), blank=True, null=True)
 
 
 MATERIALITY_CHOICES = (
@@ -119,6 +141,10 @@ class EconomicResourceType(models.Model):
         default='material')
     unit = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="resource_units")
+    photo = ThumbnailerImageField(_("photo"),
+        upload_to='photos', blank=True, null=True)
+    url = models.CharField(_('url'), max_length=255, blank=True)
+    description = models.TextField(_('description'), blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
     
     class Meta:
@@ -130,6 +156,26 @@ class EconomicResourceType(models.Model):
     def save(self, *args, **kwargs):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
+
+    def producing_process_types(self):
+        pts = self.process_types.filter(direction='produces')
+        return [pt.process_type for pt in pts]
+
+    def consuming_process_types(self):
+        pts = self.process_types.filter(direction='consumes')
+        return [pt.process_type for pt in pts]
+
+    def consuming_agents(self):
+        arts = self.agents.filter(direction='consumes')
+        return [art.agent for art in arts]
+
+    def producing_agents(self):
+        arts = self.agents.filter(direction='produces')
+        return [art.agent for art in arts]
+
+    def distributors(self):
+        arts = self.agents.filter(direction='distributes')
+        return [art.agent for art in arts]
 
 
 class EconomicResource(models.Model):
@@ -146,6 +192,7 @@ class EconomicResource(models.Model):
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of quantity'), related_name="resource_qty_units")
     quality = models.DecimalField(_('quality'), max_digits=3, decimal_places=0, default=Decimal("0"))
+    notes = models.TextField(_('notes'), blank=True, null=True)
     created_date = models.DateField(_('created date'))
 
     class Meta:
@@ -162,8 +209,33 @@ class EconomicResource(models.Model):
         super(EconomicResourceType, self).save(*args, **kwargs)
 
 
+DIRECTION_CHOICES = (
+    ('consumes', 'consumes'),
+    ('produces', 'produces'),
+    ('distributes', 'distributes'),
+)
+
+
+class AgentResourceType(models.Model):
+    agent = models.ForeignKey(EconomicAgent,
+        verbose_name=_('agent'), related_name='resource_types')
+    resource_type = models.ForeignKey(EconomicResourceType, 
+        verbose_name=_('resource type'), related_name='agents')
+    direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
+    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"))
+    unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit of value'), related_name="agent_resource_value_units")
+
+
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub_process_types')
+    description = models.TextField(_('description'), blank=True, null=True)
+    url = models.CharField(_('url'), max_length=255, blank=True)
+    estimated_duration = models.IntegerField(_('estimated duration'), 
+        default=0, help_text=_("in minutes"))
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:
@@ -176,11 +248,30 @@ class ProcessType(models.Model):
         unique_slugify(self, self.name)
         super(ProcessType, self).save(*args, **kwargs)
 
+    def produced_resource_types(self):
+        ptrts = self.resource_types.filter(direction='produces')
+        return [ptrt.resource_type for ptrt in ptrts]
+
+    def consumed_resource_types(self):
+        ptrts = self.resource_types.filter(direction='consumes')
+        return [ptrt.resource_type for ptrt in ptrts]
+
+
+class ProcessTypeResourceType(models.Model):
+    process_type = models.ForeignKey(ProcessType,
+        verbose_name=_('process type'), related_name='resource_types')
+    resource_type = models.ForeignKey(EconomicResourceType, 
+        verbose_name=_('resource type'), related_name='process_types')
+    direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
+    unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit'), related_name="process_resource_qty_units")
+
 
 class Process(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub-processes')
+        verbose_name=_('parent'), related_name='sub_processes')
     process_type = models.ForeignKey(ProcessType,
         verbose_name=_('process type'), related_name='processes')
     url = models.CharField(_('url'), max_length=255, blank=True)
@@ -207,6 +298,7 @@ class Process(models.Model):
         ])
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
+
 
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
@@ -237,10 +329,17 @@ class Project(models.Model):
             event_type=et))
 
     def contributions(self):
-        return sum(event.quantity for event in self.events.all())
+        return sum(event.quantity for event in self.events.filter(
+            event_type__resource_effect='-'))
 
     def contributions_count(self):
-        return self.events.all().count()
+        return self.events.filter(event_type__resource_effect='-').count()
+
+    def contributors(self):
+        ids = self.events.filter(event_type__resource_effect='-').values_list('from_agent').order_by('from_agent').distinct()
+        id_list = [id[0] for id in ids]
+        return EconomicAgent.objects.filter(id__in=id_list)
+
 
 RESOURCE_EFFECT_CHOICES = (
     ('+', _('increase')),
@@ -287,6 +386,119 @@ class Role(models.Model):
         super(Role, self).save(*args, **kwargs)
 
 
+class Commitment(models.Model):
+    event_type = models.ForeignKey(EventType, 
+        related_name="commitments", verbose_name=_('event type'))
+    commitment_date = models.DateField(_('commitment date'))
+    due_date = models.DateField(_('due date'))
+    from_agent = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="given_commitments", verbose_name=_('commitments_from'))
+    from_agent_role = models.ForeignKey(Role,
+        blank=True, null=True,
+        verbose_name=_('role'), related_name='commitments')
+    to_agent = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="taken_commitments", verbose_name=_('commitments_to'))
+    resource_type = models.ForeignKey(EconomicResourceType, 
+        blank=True, null=True,
+        verbose_name=_('resource type'), related_name='commitments')
+    resource = models.ForeignKey(EconomicResource, 
+        blank=True, null=True,
+        verbose_name=_('resource'), related_name='commitments')
+    process = models.ForeignKey(Process,
+        blank=True, null=True,
+        verbose_name=_('process'), related_name='commitments')
+    project = models.ForeignKey(Project,
+        blank=True, null=True,
+        verbose_name=_('project'), related_name='commitments')
+    description = models.TextField(_('description'), null=True, blank=True)
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
+    unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit'), related_name="commitment_qty_units")
+    quality = models.DecimalField(_('quality'), max_digits=3, decimal_places=0, default=Decimal("0"))
+    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"))
+    unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit of value'), related_name="commitment_value_units")
+    created_by = models.ForeignKey(User, verbose_name=_('created by'),
+        related_name='commitments_created', blank=True, null=True)
+    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
+        related_name='commitments_changed', blank=True, null=True)
+    slug = models.SlugField(_("Page name"), editable=False)
+
+    class Meta:
+        ordering = ('due_date',)
+
+    def __unicode__(self):
+        quantity_string = '$' + str(self.quantity)
+        from_agt = 'None'
+        if self.from_agent:
+            from_agt = self.from_agent.name
+        to_agt = 'None'
+        if self.to_agent:
+            to_agt = self.to_agent.name
+        resource_name = ""
+        if self.resource_type:
+			resource_name = self.resource_type.name
+        return ' '.join([
+            self.event_type.name,
+            self.event_date.strftime('%Y-%m-%d'),
+            'from',
+            from_agt,
+            'to',
+            to_agt,
+            quantity_string,
+            resource_name,
+        ])
+
+    def save(self, *args, **kwargs):
+        slug = "-".join([
+            str(self.event_type.id),
+            str(self.from_agent.id),
+            self.event_date.strftime('%Y-%m-%d'),
+        ])
+        unique_slugify(self, slug)
+        super(Commitment, self).save(*args, **kwargs)
+
+class Reciprocity(models.Model):
+    """One Commitment reciprocating another.
+
+    The EconomicAgents in the reciprocal commitments
+    must be opposites.  
+    That is, the from_agent of one commitment must be
+    the to-agent of the other commitment, and vice versa.
+    Reciprocal commitments have a M:M relationship:
+    that is, one commitment can be reciprocated by many other commitments,
+    and the other commitment can reciprocate many initiating commitments.
+
+    """
+    initiating_commitment = models.ForeignKey(Commitment, 
+        related_name="initiated_commitments", verbose_name=_('initiating commitment'))
+    reciprocal_commitment = models.ForeignKey(Commitment, 
+        related_name="reciprocal_commitments", verbose_name=_('reciprocal commitment'))
+    reciprocity_date = models.DateField(_('reciprocity date'))
+
+    class Meta:
+        ordering = ('reciprocity_date',)
+
+    def __unicode__(self):
+        return ' '.join([
+            'inititating commmitment:',
+            self.initiating_commmitment.__unicode__(),
+            'reciprocal commmitment:',
+            self.reciprocal_commitment.__unicode__(),
+            self.reciprocity_date.strftime('%Y-%m-%d'),
+        ])
+
+    def clean(self):
+        #import pdb; pdb.set_trace()
+        if self.initiating_commitment.from_agent.id != self.reciprocal_commitment.to_agent.id:
+            raise ValidationError('Initiating commitment from_agent must be the reciprocal commitment to_agent.')
+        if self.initiating_commitment.to_agent.id != self.reciprocal_commitment.from_agent.id:
+            raise ValidationError('Initiating commitment to_agent must be the reciprocal commitment from_agent.')
+
+
 class EconomicEvent(models.Model):
     event_type = models.ForeignKey(EventType, 
         related_name="events", verbose_name=_('event type'))
@@ -321,6 +533,8 @@ class EconomicEvent(models.Model):
         default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of value'), related_name="event_value_units")
+    commitment = models.ForeignKey(Commitment, blank=True, null=True,
+        verbose_name=_('fulfills commitment'), related_name="fulfillment_events")
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
         related_name='events_created', blank=True, null=True)
     changed_by = models.ForeignKey(User, verbose_name=_('changed by'),

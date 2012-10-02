@@ -64,3 +64,40 @@ def _slug_strip(value, separator=None):
         re_sep = '(?:-|%s)' % re.escape(separator)
         value = re.sub('%s+' % re_sep, separator, value)
     return re.sub(r'^%s+|%s+$' % (re_sep, re_sep), '', value)
+
+def dfs(node, all_nodes, depth):
+    """
+    Performs a recursive depth-first search starting at ``node``. 
+    """
+    to_return = [node,]
+    for subnode in all_nodes:
+        if subnode.parent and subnode.parent.id == node.id:
+            to_return.extend(dfs(subnode, all_nodes, depth+1))
+    return to_return
+
+
+class Edge(object):
+     def __init__(self, from_node, to_node):
+         self.from_node = from_node
+         self.to_node = to_node
+
+
+def explode(process_type, to_node, nodes, edges):
+    edges.append(Edge(process_type, to_node))
+    for rt in process_type.consumed_resource_types():
+        nodes.append(rt)
+        edges.append(Edge(rt, process_type))
+        for pt in rt.producing_process_types():
+            explode(pt, rt, nodes, edges)
+
+
+def graphify(focus):
+    nodes = [focus]
+    edges = []
+    for agt in focus.consuming_agents():
+        nodes.append(agt)
+        edges.append(Edge(focus, agt))
+    for pt in focus.producing_process_types():
+        explode(pt, focus, nodes, edges)
+    return [nodes, edges]
+

@@ -7,4 +7,5 @@ urlpatterns = patterns("",
     url(r"^contributionhistory/(?P<agent_id>\d+)/$", 'valuenetwork.valueaccounting.views.contribution_history', name="contribution_history"),
     url(r"^logtime/$", 'valuenetwork.valueaccounting.views.log_time', name="log_time"),
     url(r"^value/(?P<project_id>\d+)/$", 'valuenetwork.valueaccounting.views.value_equation', name="value_equation"),
+    url(r"^xbomfg/(?P<resource_type_id>\d+)/$", 'valuenetwork.valueaccounting.views.extended_bill', name="extended_bill"),
 )

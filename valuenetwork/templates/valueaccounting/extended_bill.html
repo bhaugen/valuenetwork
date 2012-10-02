@@ -1,0 +1,89 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load thumbnail %}
+
+{% block head_title %}{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.process-title {
+	font-style: italic;
+	font-size: 110%;
+	font-weight: normal;
+}
+</style>
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}</h1>
+		<h2> {{ resource_type }}
+			{% if resource_type.photo %}
+			<img src="{% thumbnail resource_type.photo photo_size %}" />
+			{% endif %}
+		</h2>
+		<ul>
+			{% for pt in resource_type.producing_process_types %}
+			<h4 class="process-title" >{{ pt }}:</h4>
+			</li>
+				<ul>
+				{% for rt in pt.consumed_resource_types %}
+					<li><h4>{{ rt }}</h4></li>
+					{% for pt2 in rt.producing_process_types %}
+						<h4 class="process-title" >{{ pt2 }}:</h4>
+						{% if pt2.consumed_resource_types %}
+						<ul>
+							{% for rt2 in pt2.consumed_resource_types %}			
+								<li><h4>
+									{{ rt2 }}
+									{% if rt2.photo %}
+									<img src="{% thumbnail rt2.photo photo_size %}" />
+									{% endif %}
+								</h4></li>
+								{% for pt3 in rt2.producing_process_types %}
+									<h4 class="process-title" >{{ pt3 }}:</h4>
+									{% if pt3.consumed_resource_types %}
+										<ul>
+										{% for rt3 in pt3.consumed_resource_types %}
+											<li><h4>
+												{{ rt3 }}
+												{% if rt3.photo %}
+												<img src="{% thumbnail rt3.photo photo_size %}" />
+												{% endif %}
+											</h4></li>
+											{% if rt3.producing_agents %}
+											<ul>
+												{% for pa in rt3.producing_agents %}
+													<li>Produced by: {{ pa }}</li>
+												{% endfor %}
+											</ul>
+											{% endif %}
+											{% if rt3.distributors %}
+											<ul>
+												{% for d in rt3.distributors %}
+													<li>Distributed by: {{ d }}</li>
+												{% endfor %}
+											</ul>
+											{% endif %}
+										{% endfor %}
+										</ul>
+									{% endif %}
+								{% endfor %}
+							{% endfor %}
+						</ul>
+						{% endif %}
+					{% endfor%}
+				{% endfor %}
+				</ul>
+			{% endfor %}
+
+		</ul>
+
+	</div>
+    </div>
+{% endblock %}

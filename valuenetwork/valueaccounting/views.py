@@ -138,3 +138,11 @@ def value_equation(request, project_id):
         "project": project,
         "events": events,
     }, context_instance=RequestContext(request))
+
+def extended_bill(request, resource_type_id):
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    return render_to_response("valueaccounting/extended_bill.html", {
+        "resource_type": rt,
+        "photo_size": (128, 128),
+    }, context_instance=RequestContext(request))
+
