@@ -113,7 +113,6 @@ class TimelineEvent(object):
          self.description = description
 
     def dictify(self):
-        #May 28 2006 09:00:00 GMT-0600
         d = {
             "start": self.start.strftime("%b %e %Y 00:00:00 GMT-0600"),
             "title": self.title,
@@ -128,7 +127,34 @@ class TimelineEvent(object):
             d["link"] = self.link
         return d
 
-def generate_timeline_events(process):
+def explode_events(resource_type, backsked_date, events):
+    for art in resource_type.producing_agent_relationships():
+        order_date = backsked_date - datetime.timedelta(days=art.lead_time)
+        title = " ".join(["Get ", art.resource_type.name, "from ", art.agent.name])
+        te = TimelineEvent(
+            art,
+            order_date,
+            "",
+            title,
+            resource_type.url,
+            resource_type.description,
+        )
+        events['events'].append(te.dictify())
+    for pp in resource_type.producing_process_types():
+        start_date = backsked_date - datetime.timedelta(days=(pp.estimated_duration/1440))
+        ppte = TimelineEvent(
+            pp,
+            start_date,
+            backsked_date,
+            pp.__unicode__(),
+            pp.url,
+            pp.description,
+        )
+        events['events'].append(ppte.dictify())
+        for crt in pp.consumed_resource_types():
+            explode_events(crt, start_date, events)
+
+def backshedule_events(process):
     te = TimelineEvent(
         process,
         process.start_date,
@@ -156,14 +182,17 @@ def generate_timeline_events(process):
             if arts:
                 lead_time = arts[0].lead_time
             end_date = ic.due_date - datetime.timedelta(days=lead_time)
+            start_date = end_date - datetime.timedelta(days=(pp.estimated_duration/1440))
             ppte = TimelineEvent(
                 pp,
-                end_date - datetime.timedelta(days=(pp.estimated_duration/1440)),
+                start_date,
                 end_date,
                 pp.__unicode__(),
                 pp.url,
                 pp.description,
             )
             events['events'].append(ppte.dictify())
+            for crt in pp.consumed_resource_types():
+                explode_events(crt, start_date, events)
 
     return events

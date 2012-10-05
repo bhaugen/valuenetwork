@@ -185,6 +185,9 @@ class EconomicResourceType(models.Model):
         arts = self.agents.filter(direction='produces')
         return [art.agent for art in arts]
 
+    def producing_agent_relationships(self):
+        return self.agents.filter(direction='produces')
+
     def distributors(self):
         arts = self.agents.filter(direction='distributes')
         return [art.agent for art in arts]
@@ -240,6 +243,13 @@ class AgentResourceType(models.Model):
         default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of value'), related_name="agent_resource_value_units")
+
+    def __unicode__(self):
+        return ' '.join([
+            self.agent.name,
+            self.direction,
+            self.resource_type.name,
+        ])
 
 
 class ProcessType(models.Model):
@@ -473,6 +483,7 @@ class Commitment(models.Model):
             from_agt,
             'to',
             to_agt,
+
             resource_name,
         ])
 

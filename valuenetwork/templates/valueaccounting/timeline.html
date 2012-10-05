@@ -15,7 +15,9 @@
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
+		<h1>{% trans "Timeline" %}</h1>
+		<p>{% trans "Double-click on months to slide days. Click on event in day to show details." %}</p>	
+		<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
     </div>
 
 <script>
@@ -25,7 +27,7 @@ $(document).ready(function() {
    var bandInfos = [
      Timeline.createBandInfo({
          eventSource:    eventSource,
-         date:           "Oct 4 2012 00:00:00 GMT-0600",
+         date:           "{{ timeline_date }}",
          width:          "70%", 
          intervalUnit:   Timeline.DateTime.DAY, 
          intervalPixels: 100
@@ -33,7 +35,7 @@ $(document).ready(function() {
      Timeline.createBandInfo({
          overview:       true,
          eventSource:    eventSource,
-         date:           "Oct 4 2012 00:00:00 GMT-0600",
+         date:           "{{ timeline_date }}",
          width:          "30%", 
          intervalUnit:   Timeline.DateTime.MONTH, 
          intervalPixels: 200
