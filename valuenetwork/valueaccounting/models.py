@@ -234,6 +234,8 @@ class AgentResourceType(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='agents')
     direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
+    lead_time = models.IntegerField(_('lead time'), 
+        default=0, help_text=_("in days"))
     value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
         default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
@@ -316,6 +318,9 @@ class Process(models.Model):
         ])
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
+
+    def incoming_commitments(self):
+        return self.commitments.filter(to_agent__id=self.owner.id)
 
 
 class Project(models.Model):
@@ -411,13 +416,13 @@ class Commitment(models.Model):
     due_date = models.DateField(_('due date'))
     from_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
-        related_name="given_commitments", verbose_name=_('commitments_from'))
+        related_name="given_commitments", verbose_name=_('from'))
     from_agent_role = models.ForeignKey(Role,
         blank=True, null=True,
         verbose_name=_('role'), related_name='commitments')
     to_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
-        related_name="taken_commitments", verbose_name=_('commitments_to'))
+        related_name="taken_commitments", verbose_name=_('to'))
     resource_type = models.ForeignKey(EconomicResourceType, 
         blank=True, null=True,
         verbose_name=_('resource type'), related_name='commitments')
@@ -431,6 +436,7 @@ class Commitment(models.Model):
         blank=True, null=True,
         verbose_name=_('project'), related_name='commitments')
     description = models.TextField(_('description'), null=True, blank=True)
+    url = models.CharField(_('url'), max_length=255, blank=True)
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2)
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="commitment_qty_units")
@@ -449,32 +455,35 @@ class Commitment(models.Model):
         ordering = ('due_date',)
 
     def __unicode__(self):
-        quantity_string = '$' + str(self.quantity)
-        from_agt = 'None'
+        quantity_string = str(self.quantity)
+        from_agt = 'Unassigned'
         if self.from_agent:
             from_agt = self.from_agent.name
-        to_agt = 'None'
+        to_agt = 'Unassigned'
         if self.to_agent:
             to_agt = self.to_agent.name
         resource_name = ""
         if self.resource_type:
 			resource_name = self.resource_type.name
         return ' '.join([
+            "Commitment for",
             self.event_type.name,
-            self.event_date.strftime('%Y-%m-%d'),
+            self.due_date.strftime('%Y-%m-%d'),
             'from',
             from_agt,
             'to',
             to_agt,
-            quantity_string,
             resource_name,
         ])
 
     def save(self, *args, **kwargs):
+        from_id = "Unassigned"
+        if self.from_agent:
+            from_id = str(self.from_agent.id)
         slug = "-".join([
             str(self.event_type.id),
-            str(self.from_agent.id),
-            self.event_date.strftime('%Y-%m-%d'),
+            from_id,
+            self.due_date.strftime('%Y-%m-%d'),
         ])
         unique_slugify(self, slug)
         super(Commitment, self).save(*args, **kwargs)
@@ -563,11 +572,11 @@ class EconomicEvent(models.Model):
         ordering = ('event_date',)
 
     def __unicode__(self):
-        quantity_string = '$' + str(self.quantity)
-        from_agt = 'None'
+        quantity_string = str(self.quantity)
+        from_agt = 'Unassigned'
         if self.from_agent:
             from_agt = self.from_agent.name
-        to_agt = 'None'
+        to_agt = 'Unassigned'
         if self.to_agent:
             to_agt = self.to_agent.name
         return ' '.join([

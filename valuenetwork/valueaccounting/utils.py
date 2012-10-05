@@ -1,4 +1,5 @@
 import re
+import datetime
 from django.template.defaultfilters import slugify
 
 def split_thousands(n, sep=','):
@@ -92,7 +93,6 @@ def explode(process_type, to_node, nodes, edges):
         for pt in rt.producing_process_types():
             explode(pt, rt, nodes, edges)
 
-
 def graphify(focus):
     nodes = [focus]
     edges = []
@@ -103,3 +103,67 @@ def graphify(focus):
         explode(pt, focus, nodes, edges)
     return [nodes, edges]
 
+class TimelineEvent(object):
+    def __init__(self, node, start, end, title, link, description):
+         self.node = node
+         self.start = start
+         self.end = end
+         self.title = title
+         self.link = link
+         self.description = description
+
+    def dictify(self):
+        #May 28 2006 09:00:00 GMT-0600
+        d = {
+            "start": self.start.strftime("%b %e %Y 00:00:00 GMT-0600"),
+            "title": self.title,
+            "description": self.description,
+        }
+        if self.end:
+            d["end"] = self.end.strftime("%b %e %Y 00:00:00 GMT-0600")
+            d["durationEvent"] = True
+        else:
+            d["durationEvent"] = False
+        if self.link:
+            d["link"] = self.link
+        return d
+
+def generate_timeline_events(process):
+    te = TimelineEvent(
+        process,
+        process.start_date,
+        process.end_date,
+        process.name,
+        process.url,
+        process.notes,
+    )
+    events = {'dateTimeFormat': 'Gregorian','events':[]}
+    events['events'].append(te.dictify())
+    for ic in process.incoming_commitments():
+        te = TimelineEvent(
+            ic,
+            ic.due_date,
+            "",
+            ic.__unicode__(),
+            ic.url,
+            ic.description,
+        )
+        events['events'].append(te.dictify())
+        for pp in ic.resource_type.producing_process_types():
+            lead_time=1
+            if ic.from_agent:
+                arts = ic.from_agent.resource_types.filter(resource_type=ic.resource_type)
+            if arts:
+                lead_time = arts[0].lead_time
+            end_date = ic.due_date - datetime.timedelta(days=lead_time)
+            ppte = TimelineEvent(
+                pp,
+                end_date - datetime.timedelta(days=(pp.estimated_duration/1440)),
+                end_date,
+                pp.__unicode__(),
+                pp.url,
+                pp.description,
+            )
+            events['events'].append(ppte.dictify())
+
+    return events

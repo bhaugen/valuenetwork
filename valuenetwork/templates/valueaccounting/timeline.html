@@ -1,0 +1,69 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load thumbnail %}
+
+{% block head_title %}{% trans "Timeline" %}{% endblock %}
+
+{% block extra_head %}
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="http://api.simile-widgets.org/timeline/2.3.1/timeline-api.js?bundle=true,defaultLocale=en" type="text/javascript"></script>
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
+    </div>
+
+<script>
+var tl;
+$(document).ready(function() {
+   var eventSource = new Timeline.DefaultEventSource();
+   var bandInfos = [
+     Timeline.createBandInfo({
+         eventSource:    eventSource,
+         date:           "Oct 4 2012 00:00:00 GMT-0600",
+         width:          "70%", 
+         intervalUnit:   Timeline.DateTime.DAY, 
+         intervalPixels: 100
+     }),
+     Timeline.createBandInfo({
+         overview:       true,
+         eventSource:    eventSource,
+         date:           "Oct 4 2012 00:00:00 GMT-0600",
+         width:          "30%", 
+         intervalUnit:   Timeline.DateTime.MONTH, 
+         intervalPixels: 200
+     })
+   ];
+   bandInfos[1].syncWith = 0;
+   bandInfos[1].highlight = true;
+   
+   tl = Timeline.create(document.getElementById("my-timeline"), bandInfos);
+
+	Timeline.GregorianDateLabeller.prototype.labelPrecise = function(date) {
+	    return SimileAjax.DateTime.removeTimeZoneOffset(
+    	    date, 
+    	    this._timeZone //+ (new Date().getTimezoneOffset() / 60)
+    	).toLocaleDateString();
+	};
+
+	tl.loadJSON("{% url json_timeline %}", function(data, url) {
+    	eventSource.loadJSON(data, url);
+  	});
+ });
+
+ var resizeTimerID = null;
+$(window).resize(function() {
+     if (resizeTimerID == null) {
+         resizeTimerID = window.setTimeout(function() {
+             resizeTimerID = null;
+             tl.layout();
+         }, 500);
+     }
+ });
+</script>
+{% endblock %}

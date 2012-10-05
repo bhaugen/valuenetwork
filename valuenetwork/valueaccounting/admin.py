@@ -81,6 +81,16 @@ class ProjectAdmin(admin.ModelAdmin):
 admin.site.register(Project, ProjectAdmin)
 
 
+class CommitmentAdmin(admin.ModelAdmin):
+    date_hierarchy = 'due_date'
+    list_display = ('event_type', 'due_date', 'from_agent', 'from_agent_role', 'project', 
+        'resource_type', 'quantity', 'unit_of_quantity', 'description', 'quality')
+    list_filter = ['event_type', 'project', 'from_agent_role', 'from_agent', ]
+    search_fields = ['name', 'event_type__name', 'from_agent__name', 'to_agent__name', 'resource_type__name']
+    
+admin.site.register(Commitment, CommitmentAdmin)
+
+
 class EconomicEventAdmin(admin.ModelAdmin):
     date_hierarchy = 'event_date'
     list_display = ('event_type', 'event_date', 'from_agent', 'from_agent_role', 'project', 
