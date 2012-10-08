@@ -130,12 +130,11 @@ class TimelineEvent(object):
 def explode_events(resource_type, backsked_date, events):
     for art in resource_type.producing_agent_relationships():
         order_date = backsked_date - datetime.timedelta(days=art.lead_time)
-        title = " ".join(["Get ", art.resource_type.name, "from ", art.agent.name])
         te = TimelineEvent(
             art,
             order_date,
             "",
-            title,
+            art.timeline_title(),
             resource_type.url,
             resource_type.description,
         )
@@ -146,7 +145,7 @@ def explode_events(resource_type, backsked_date, events):
             pp,
             start_date,
             backsked_date,
-            pp.__unicode__(),
+            pp.timeline_title(),
             pp.url,
             pp.description,
         )
@@ -159,7 +158,7 @@ def backshedule_events(process):
         process,
         process.start_date,
         process.end_date,
-        process.name,
+        process.timeline_title(),
         process.url,
         process.notes,
     )
@@ -170,7 +169,7 @@ def backshedule_events(process):
             ic,
             ic.due_date,
             "",
-            ic.__unicode__(),
+            ic.timeline_title(),
             ic.url,
             ic.description,
         )
@@ -187,7 +186,7 @@ def backshedule_events(process):
                 pp,
                 start_date,
                 end_date,
-                pp.__unicode__(),
+                pp.timeline_title(),
                 pp.url,
                 pp.description,
             )

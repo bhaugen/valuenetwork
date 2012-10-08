@@ -29,6 +29,7 @@ UNIT_TYPE_CHOICES = (
     ('value', _('value')),
     ('volume', _('volume')),
     ('weight', _('weight')),
+    ('ip', _('ip')),
 )
  
 class Unit(models.Model):
@@ -251,6 +252,8 @@ class AgentResourceType(models.Model):
             self.resource_type.name,
         ])
 
+    def timeline_title(self):
+        return " ".join(["Get ", self.resource_type.name, "from ", self.agent.name])
 
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
@@ -271,6 +274,9 @@ class ProcessType(models.Model):
     def save(self, *args, **kwargs):
         unique_slugify(self, self.name)
         super(ProcessType, self).save(*args, **kwargs)
+
+    def timeline_title(self):
+        return " ".join([self.name, "Process to be planned"])
 
     def node_id(self):
         return "-".join(["ProcessType", str(self.id)])
@@ -328,6 +334,9 @@ class Process(models.Model):
         ])
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
+
+    def timeline_title(self):
+        return " ".join([self.name, "Process"])
 
     def incoming_commitments(self):
         return self.commitments.filter(to_agent__id=self.owner.id)
@@ -483,7 +492,7 @@ class Commitment(models.Model):
             from_agt,
             'to',
             to_agt,
-
+            quantity_string,
             resource_name,
         ])
 
@@ -498,6 +507,22 @@ class Commitment(models.Model):
         ])
         unique_slugify(self, slug)
         super(Commitment, self).save(*args, **kwargs)
+
+    def timeline_title(self):
+        quantity_string = str(self.quantity)
+        from_agt = 'Unassigned'
+        if self.from_agent:
+            from_agt = self.from_agent.name
+        process = "Unknown"
+        if self.process:
+            process = self.process.name
+        return ' '.join([
+            self.resource_type.name,
+            'from',
+            from_agt,
+            'to',
+            process,
+        ])
 
 class Reciprocity(models.Model):
     """One Commitment reciprocating another.
@@ -580,7 +605,7 @@ class EconomicEvent(models.Model):
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:
-        ordering = ('event_date',)
+        ordering = ('-event_date',)
 
     def __unicode__(self):
         quantity_string = str(self.quantity)

@@ -54,9 +54,9 @@
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div>
+	<div style="margin-left: -8em;" >
 		<h1>{% trans "Contributions from " %} {{ agent }}</h1>
-		<table style="width: 100%;" >
+		<table>
 			<thead>
 				<th>Date</th>
 				<th>Type</th>
@@ -78,7 +78,11 @@
 						<td>{{ event.resource_type }}</td>
 						<td style="text-align: right;" >{{ event.quantity_formatted }}</td>
 						<td>{{ event.unit_of_quantity }}</td>
-						<td>{{ event.url|urlize }}</td>
+						<td>
+							{% if event.url %}
+								<a href="{{ event.url }}" target="_blank">Open</a>
+							{% endif %}
+						</td>
 						<td>{{ event.description|urlize }}</td>
 					</tr>
 				{% endfor %}

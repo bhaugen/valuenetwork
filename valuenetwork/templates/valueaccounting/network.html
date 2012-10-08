@@ -14,7 +14,7 @@
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div>
+	<div style="margin-left: -8em;" >
 		<h1>{% trans "Value Network for " %} {{ resource_type }}
 			{% if resource_type.photo %}
 			<img src="{% thumbnail resource_type.photo photo_size %}" />
@@ -22,9 +22,10 @@
 		</h1>
 		<button id="redraw" onclick="redraw();">redraw</button> or just drag stuff around...
 
+		<div id="canvas" style="width:100%; height:600px;" ></div>
+
 	</div>
 
-	<div id="canvas"></div>
 
 	{% include "valueaccounting/_network_diagram.html" %}
 
