@@ -43,7 +43,7 @@ $(document).ready(function() {
 			else
 			{
 				var set = r.set().push(
-					r.ellipse(n.point[0]-30, n.point[1]-13, 40, 25).attr({"fill": "#FFF8DC", "stroke-width": 2 })).push(
+					r.ellipse(n.point[0]-30, n.point[1]-13, 40, 25).attr({"stroke": n.color,"fill": "#FFF8DC", "stroke-width": 2 })).push(
 					r.text(n.point[0]-30, n.point[1]-10, (n.label || n.id)));	
 			}
             return set;
@@ -72,10 +72,20 @@ $(document).ready(function() {
 					directed : true, 
 					label : "{{ edge.label }}",
 					weight: 1, 
-					stroke : "{{ edge.from_node.color }}" , 
-					fill : "{{ edge.from_node.color }}|{{ edge.width }}" 
+					stroke : "{{ edge.to_node.color }}" , 
+					fill : "{{ edge.to_node.color }}|{{ edge.width }}" 
 				} 
 			);
+        {% elif edge.from_node.color == "green" %} // from_node is an agent
+			g.addEdge( "{{ edge.from_node.node_id}}" , "{{ edge.to_node.node_id }}", 
+				{ 
+					directed : true, 
+					label : "{{ edge.label }}",
+					weight: 1, 
+					stroke : "{{ edge.to_node.color }}" , 
+					fill : "{{ edge.to_node.color }}|{{ edge.width }}" 
+				} 
+			);	
 		{% else %} // from_node is a resource
 			g.addEdge( "{{ edge.from_node.node_id}}" , "{{ edge.to_node.node_id }}", 
 				{ 

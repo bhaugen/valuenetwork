@@ -118,6 +118,7 @@ class EconomicAgent(models.Model):
         return "green"
 
 
+
 class AssociationType(models.Model):
     name = models.CharField(_('name'), max_length=128)
 
@@ -171,23 +172,32 @@ class EconomicResourceType(models.Model):
         return "red"
 
     def producing_process_types(self):
-        pts = self.process_types.filter(direction='produces')
+        pts = self.process_types.exclude(direction='consumes').exclude(direction__contains='use')
         return [pt.process_type for pt in pts]
+
+    def producing_process_type_relationships(self):
+        return self.process_types.exclude(direction='consumes').exclude(direction__contains='use')
 
     def consuming_process_types(self):
-        pts = self.process_types.filter(direction='consumes')
+        pts = self.process_types.exclude(direction='produces').exclude(direction='distributes')
         return [pt.process_type for pt in pts]
 
+    def consuming_process_type_relationships(self):
+        return self.process_types.exclude(direction='produces').exclude(direction='distributes')
+
     def consuming_agents(self):
-        arts = self.agents.filter(direction='consumes')
+        arts = self.agents.exclude(direction='produces').exclude(direction='distributes')
         return [art.agent for art in arts]
 
     def producing_agents(self):
-        arts = self.agents.filter(direction='produces')
+        arts = self.agents.exclude(direction='consumes').exclude(direction__contains='use')
         return [art.agent for art in arts]
 
     def producing_agent_relationships(self):
-        return self.agents.filter(direction='produces')
+        return self.agents.exclude(direction='consumes').exclude(direction__contains='use')
+
+    def consuming_agent_relationships(self):
+        return self.agents.exclude(direction='produces').exclude(direction='distributes')
 
     def distributors(self):
         arts = self.agents.filter(direction='distributes')
@@ -227,6 +237,8 @@ class EconomicResource(models.Model):
 
 DIRECTION_CHOICES = (
     ('consumes', 'consumes'),
+    ('uses', 'uses'),
+    ('potential user', 'potential user'),
     ('produces', 'produces'),
     ('distributes', 'distributes'),
 )
@@ -254,6 +266,7 @@ class AgentResourceType(models.Model):
 
     def timeline_title(self):
         return " ".join(["Get ", self.resource_type.name, "from ", self.agent.name])
+
 
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
@@ -285,12 +298,15 @@ class ProcessType(models.Model):
         return "blue"
 
     def produced_resource_types(self):
-        ptrts = self.resource_types.filter(direction='produces')
+        ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
         return [ptrt.resource_type for ptrt in ptrts]
 
     def consumed_resource_types(self):
-        ptrts = self.resource_types.filter(direction='consumes')
+        ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
         return [ptrt.resource_type for ptrt in ptrts]
+
+    def consumed_resource_type_relationships(self):
+        return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
 
 
 class ProcessTypeResourceType(models.Model):
@@ -302,6 +318,15 @@ class ProcessTypeResourceType(models.Model):
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="process_resource_qty_units")
+
+    def __unicode__(self):
+        return " ".join([self.process_type.name, self.direction, str(self.quantity), self.resource_type.name])
+
+    def diagram_input_label(self):
+        if self.direction == "uses":
+            return "used by"
+        if self.direction == "consumes":
+            return "consumed by"        
 
 
 class Process(models.Model):
@@ -381,6 +406,9 @@ class Project(models.Model):
         ids = self.events.filter(event_type__resource_effect='-').values_list('from_agent').order_by('from_agent').distinct()
         id_list = [id[0] for id in ids]
         return EconomicAgent.objects.filter(id__in=id_list)
+
+    def with_all_sub_projects(self):
+        return flattened_children(self, Project.objects.all(), [])
 
 
 RESOURCE_EFFECT_CHOICES = (
@@ -698,3 +726,71 @@ class Compensation(models.Model):
         #if self.initiating_event.unit_of_value.id != self.compensating_event.unit_of_value.id:
         #    raise ValidationError('Initiating event and compensating event must have the same units of value.')
 
+
+
+class EventSummary(object):
+    def __init__(self, agent, project, role, quantity, value=Decimal('0.0')):
+        self.agent = agent
+        self.project = project
+        self.role = role
+        self.quantity = quantity
+        self.value=value
+
+    def key(self):
+        return "-".join([str(self.agent.id), str(self.role.id)])
+
+    def quantity_formatted(self):
+        return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
+
+
+class CachedEventSummary(models.Model):
+    agent = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="cached_events", verbose_name=_('agent'))
+    project = models.ForeignKey(Project,
+        blank=True, null=True,
+        verbose_name=_('project'), related_name='cached_events')
+    role = models.ForeignKey(Role,
+        blank=True, null=True,
+        verbose_name=_('role'), related_name='cached_events')
+    role_rate = models.DecimalField(_('role_rate'), max_digits=8, decimal_places=2, default=Decimal("1.0"))
+    importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("1"))
+    reputation = models.DecimalField(_('reputation'), max_digits=8, decimal_places=2, 
+        default=Decimal("1.00"))
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"))
+    value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"))
+
+    class Meta:
+        ordering = ('agent', 'project', 'role')
+
+    @classmethod
+    def summarize_events(cls, project):
+        all_subs = project.with_all_sub_projects()
+        event_list = EconomicEvent.objects.filter(project__in=all_subs)
+        summaries = {}
+        for event in event_list:
+            key = "-".join([str(event.from_agent.id), str(event.project.id), str(event.from_agent_role.id)])
+            if not key in summaries:
+                summaries[key] = EventSummary(event.from_agent, event.project, event.from_agent_role, Decimal('0.0'))
+            summaries[key].quantity += event.quantity
+        summaries = summaries.values()
+        for summary in summaries:
+            ces = cls(
+                agent=summary.agent,
+                project=summary.project,
+                role=summary.role,
+                role_rate=summary.role.rate,
+                importance=summary.project.importance,
+                quantity=summary.quantity,
+            )
+            ces.save()
+        return cls.objects.all()
+
+
+    def quantity_formatted(self):
+        return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
+
+    def value_formatted(self):
+        return self.value.quantize(Decimal('.01'), rounding=ROUND_UP)

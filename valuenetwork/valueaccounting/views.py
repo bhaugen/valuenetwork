@@ -104,27 +104,79 @@ class EventSummary(object):
         self.value=value
 
     def key(self):
-        return "".join([self.agent.nick, self.role.name])
+        return "-".join([str(self.agent.id), str(self.role.id)])
 
     def quantity_formatted(self):
         return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
 
 
-def value_equation(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
-    event_list = project.events.all()
-    summaries = {}
-    #import pdb; pdb.set_trace()
-    for event in event_list:
-        es = EventSummary(event.from_agent, event.from_agent_role, Decimal('0.0'))
-        if not es.key() in summaries:
-            summaries[es.key()] = es
-        summaries[es.key()].quantity += event.quantity
-    summaries = summaries.values()
-    summaries = sorted(summaries, key=attrgetter('agent.name',
-                                          'role.name'))    
-    paginator = Paginator(summaries, 30)
+class AgentSummary(object):
+    def __init__(self, 
+        agent, 
+        value=Decimal('0.0'), 
+        percentage=Decimal('0.0'),
+        amount=Decimal('0.0'),
+    ):
+        self.agent = agent
+        self.value=value
+        self.percentage=percentage
+        self.amount=amount
 
+
+def value_equation(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)    
+    if not CachedEventSummary.objects.all().exists():
+        summaries = CachedEventSummary.summarize_events(project)
+    all_subs = project.with_all_sub_projects()
+    summaries = CachedEventSummary.objects.select_related(
+        'agent', 'project', 'role').filter(project__in=all_subs).order_by(
+        'agent__name', 'project__name', 'role__name')
+    total = 0
+    agent_totals = []
+    init = {"equation": "( hours * ( rate + importance + reputation ) ) + seniority"}
+    form = EquationForm(data=request.POST or None,
+        initial=init)
+    if request.method == "POST":
+        #import pdb; pdb.set_trace()
+        if form.is_valid():
+            data = form.cleaned_data
+            equation = data["equation"]
+            amount = data["amount"]
+            if amount:
+                amount = Decimal(amount)
+            eq = equation.split(" ")
+            for i, x in enumerate(eq):
+                try:
+                    y = Decimal(x)
+                    eq[i] = "".join(["Decimal('", x, "')"])
+                except InvalidOperation:
+                    continue
+            s = " "
+            equation = s.join(eq)
+            agent_sums = {}
+            total = Decimal("0.00")
+            for summary in summaries:
+                hours = summary.quantity
+                rate = summary.role_rate
+                importance = summary.importance
+                reputation = summary.reputation
+                seniority = summary.agent.seniority()
+                summary.value = eval(equation)
+                agent = summary.agent
+                if not agent.id in agent_sums:
+                    agent_sums[agent.id] = AgentSummary(agent)
+                agent_sums[agent.id].value += summary.value
+                total += summary.value
+            agent_totals = agent_sums.values()
+            #import pdb; pdb.set_trace()
+            for at in agent_totals:
+               pct = at.value / total
+               at.value = at.value.quantize(Decimal('.01'), rounding=ROUND_UP)
+               at.percentage = ( pct * 100).quantize(Decimal('.01'), rounding=ROUND_UP)
+               if amount:
+                   at.amount = (amount * pct).quantize(Decimal('.01'), rounding=ROUND_UP)
+
+    paginator = Paginator(summaries, 50)
     page = request.GET.get('page')
     try:
         events = paginator.page(page)
@@ -138,6 +190,9 @@ def value_equation(request, project_id):
     return render_to_response("valueaccounting/value_equation.html", {
         "project": project,
         "events": events,
+        "form": form,
+        "agent_totals": agent_totals,
+        "total": total,
     }, context_instance=RequestContext(request))
 
 def extended_bill(request, resource_type_id):
@@ -148,6 +203,7 @@ def extended_bill(request, resource_type_id):
     }, context_instance=RequestContext(request))
 
 def network(request, resource_type_id):
+    #import pdb; pdb.set_trace()
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
     nodes, edges = graphify(rt)
     return render_to_response("valueaccounting/network.html", {

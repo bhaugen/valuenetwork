@@ -1,6 +1,8 @@
 {% extends "site_base.html" %}
 
 {% load i18n %}
+{% load url from future %}
+{% load bootstrap_tags %}
 
 {% block head_title %}{% trans "Value Time Contributions for " %} {{ project }}{% endblock %}
 
@@ -58,51 +60,58 @@ textarea {
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div>
-		<h1>{% trans "Value Time Contributions for " %} {{ project }}</h1>
+	<div style="margin-left: -8em;" >
+		<legend>{% trans "Value Time Contributions for " %} {{ project }}</legend>
 
-		<form>
 			<p>
-				Enter an equation using the parameters hours, rate, reputation, and seniority, and the operators +, -, * and /. 
+				Enter an equation using the parameters hours, rate, reputation, seniority, and importance. 
 				</br>The result will be the value of the time contribution.
+				</br>Please leave a space between each element of the equation.
         	</p>
 
 			<p>
 				Your equation will be saved along with its results, so that the community can decide on which equation to use.
 			</p>
 			
+			<form method="POST" action="">
+			{% csrf_token %}
 			<div style="float: left;">
-				<textarea rows="4" cols="60"></textarea>
-			</div>
-			<div style="float: left; padding-left: 1em;">
-				<p>This is another mockup that does not work yet.</p>
-				<input id="submit" type="submit" value="Compute values" />
-			</div>
-			<div style="clear:both;"></div>
 
-		</form>
+		    {{ form|as_bootstrap }}
+			</div>
+
+		    <div class="form-actions" style="float: left;">
+		        <button class="btn btn-primary" type="submit">Compute</button>
+		    </div>
+			<div style="clear:both;"></div>
+			</form>
+
 
 	<div style="float: left; width: 60%">
 		<table style="width: 100%;" >
 			<thead>
 				<th>Member</th>
+				<th>Project</th>
 				<th>Role</th>
 				<th>Role Rate</th>
 				<th>Hours</th>
 				<th>Reputation</th>
 				<th>Seniority</th>
+				<th>Importance</th>
 				<th>Value</th>
 			</thead>
 			<tbody>	
 				{% for event in events %}
 					<tr class="{% cycle 'odd' 'even' %}">
 						<td>{{ event.agent }}</td>
+						<td>{{ event.project }}</td>
 						<td>{{ event.role }}</td>
-						<td style="text-align: right;" >{{ event.role.rate }}</td>
+						<td style="text-align: right;" >{{ event.role_rate }}</td>
 						<td style="text-align: right;" >{{ event.quantity_formatted }}</td>
-						<td style="text-align: right;" >{{ event.agent.reputation }}</td>
+						<td style="text-align: right;" >{{ event.reputation }}</td>
 						<td style="text-align: right;" >{{ event.agent.seniority }}</td>
-						<td style="text-align: right;" >{{ event.value }}</td>
+						<td style="text-align: right;" >{{ event.importance }}</td>
+						<td style="text-align: right;" >{{ event.value_formatted }}</td>
 					</tr>
 				{% endfor %}
 			<tbody>	
@@ -124,9 +133,28 @@ textarea {
 		</div>
 	</div>
 	<div style="float: left; padding-left: 1em;">
-		<p>This will be a chart of relative contribution values per member.</p>
+		{% if agent_totals %}
+		<table style="width: 100%;" >
+			<thead>
+				<th>Member</th>
+				<th>Total Value</th>
+				<th>Percentage</th>
+				<th>Amount Distributed</th>
+			</thead>
+			<tbody>	
+				{% for at in agent_totals %}
+					<tr class="{% cycle 'odd' 'even' %}">
+						<td>{{ at.agent }}</td>
+						<td style="text-align: right;" >{{ at.value }}</td>
+						<td style="text-align: right;" >{{ at.percentage }}</td>
+						<td style="text-align: right;" >{{ at.amount }}</td>
+					</tr>
+				{% endfor %}
+			<tbody>	
+		</table>
+		{% endif %}
 	</div>
 	<div style="clear:both;"></div>
-
+	</div>
     </div>
 {% endblock %}

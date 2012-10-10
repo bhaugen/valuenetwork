@@ -76,31 +76,45 @@ def dfs(node, all_nodes, depth):
             to_return.extend(dfs(subnode, all_nodes, depth+1))
     return to_return
 
+def flattened_children(node, all_nodes, to_return):
+     to_return.append(node)
+     for subnode in all_nodes:
+         if subnode.parent and subnode.parent.id == node.id:
+             flattened_children(subnode, all_nodes, to_return)
+     return to_return
 
 class Edge(object):
-     def __init__(self, from_node, to_node):
-         self.from_node = from_node
-         self.to_node = to_node
-         self.width = 1
+    def __init__(self, from_node, to_node, label):
+        self.from_node = from_node
+        self.to_node = to_node
+        self.label = label
+        self.width = 1
 
 
-def explode(process_type, to_node, nodes, edges):
-    nodes.append(process_type)
-    edges.append(Edge(process_type, to_node))
-    for rt in process_type.consumed_resource_types():
-        nodes.append(rt)
-        edges.append(Edge(rt, process_type))
-        for pt in rt.producing_process_types():
-            explode(pt, rt, nodes, edges)
+def explode(process_type_relationship, nodes, edges):
+    nodes.append(process_type_relationship.process_type)
+    edges.append(Edge(
+        process_type_relationship.process_type, 
+        process_type_relationship.resource_type, 
+        process_type_relationship.direction
+    ))
+    for rtr in process_type_relationship.process_type.consumed_resource_type_relationships():
+        nodes.append(rtr.resource_type)
+        edges.append(Edge(rtr.resource_type, process_type_relationship.process_type, rtr.diagram_input_label()))
+        for art in rtr.resource_type.producing_agent_relationships():
+            nodes.append(art.agent)
+            edges.append(Edge(art.agent, rtr.resource_type, art.direction))
+        for pt in rtr.resource_type.producing_process_type_relationships():
+            explode(pt, nodes, edges)
 
 def graphify(focus):
     nodes = [focus]
     edges = []
-    for agt in focus.consuming_agents():
-        nodes.append(agt)
-        edges.append(Edge(focus, agt))
-    for pt in focus.producing_process_types():
-        explode(pt, focus, nodes, edges)
+    for art in focus.consuming_agent_relationships():
+        nodes.append(art.agent)
+        edges.append(Edge(focus, art.agent, art.direction))
+    for ptr in focus.producing_process_type_relationships():
+        explode(ptr, nodes, edges)
     return [nodes, edges]
 
 class TimelineEvent(object):
