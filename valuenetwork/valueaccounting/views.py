@@ -156,12 +156,13 @@ def value_equation(request, project_id):
             agent_sums = {}
             total = Decimal("0.00")
             for summary in summaries:
-                hours = summary.quantity
-                rate = summary.role_rate
-                importance = summary.importance
-                reputation = summary.reputation
-                seniority = summary.agent.seniority()
-                summary.value = eval(equation)
+                safe_dict = {}
+                safe_dict['hours'] = summary.quantity
+                safe_dict['rate'] = summary.role_rate
+                safe_dict['importance'] = summary.importance
+                safe_dict['reputation'] = summary.reputation
+                safe_dict['seniority'] = summary.agent.seniority()
+                summary.value = eval(equation, {"__builtins__":None}, safe_dict)
                 agent = summary.agent
                 if not agent.id in agent_sums:
                     agent_sums[agent.id] = AgentSummary(agent)
