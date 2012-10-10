@@ -34,11 +34,12 @@ class EquationForm(forms.Form):
 
     def clean_equation(self):
         equation = self.cleaned_data["equation"]
-        hours = 1
-        rate = 1
-        reputation = 1
-        seniority = 1
-        importance = 1
+        safe_dict = {}
+        safe_dict['hours'] = 1
+        safe_dict['rate'] = 1
+        safe_dict['importance'] = 1
+        safe_dict['reputation'] = 1
+        safe_dict['seniority'] = 1
         eq = equation.split(" ")
         for i, x in enumerate(eq):
             try:
@@ -50,7 +51,7 @@ class EquationForm(forms.Form):
         eq = s.join(eq)
 
         try:
-            eval(eq)
+            eval(eq, {"__builtins__":None}, safe_dict)
         except NameError:
             raise forms.ValidationError(sys.exc_info()[1])
         except SyntaxError:
