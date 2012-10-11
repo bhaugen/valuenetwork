@@ -7,6 +7,28 @@ from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 admin.autodiscover()
 
+from django.contrib import databrowse
+from valuenetwork.valueaccounting.models import *
+
+databrowse.site.register(
+    AgentType,
+    AssociationType,
+    AgentAssociation,
+    EconomicAgent, 
+    EconomicResourceType,
+    EconomicResource,
+    AgentResourceType, 
+    ProcessType, 
+    ProcessTypeResourceType,
+    Project,
+    Role,
+    Commitment,
+    EconomicEvent,
+    EventType,
+    Process,
+    Unit,
+    CachedEventSummary,
+)
 
 urlpatterns = patterns("",
     url(r"^$", direct_to_template, {"template": "homepage.html"}, name="home"),
@@ -14,6 +36,7 @@ urlpatterns = patterns("",
 
     url(r"^account/", include("account.urls")),
     url(r"^accounting/", include("valuenetwork.valueaccounting.urls")),
+    (r'^databrowse/(.*)', databrowse.site.root),
 )
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

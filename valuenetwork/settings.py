@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.databrowse',
     
     # theme
     "pinax_theme_bootstrap_account",

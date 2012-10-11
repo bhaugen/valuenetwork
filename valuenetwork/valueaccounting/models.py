@@ -765,6 +765,16 @@ class CachedEventSummary(models.Model):
     class Meta:
         ordering = ('agent', 'project', 'role')
 
+    def __unicode__(self):
+        return ' '.join([
+            'Agent:',
+            self.agent.name,
+            'Project:',
+            self.project.name,
+            'Role:',
+            self.role.name,
+        ])
+
     @classmethod
     def summarize_events(cls, project):
         all_subs = project.with_all_sub_projects()
