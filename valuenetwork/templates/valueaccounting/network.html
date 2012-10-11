@@ -14,7 +14,7 @@
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div style="margin-left: -8em;" >
+	<div>
 		<h1>{% trans "Value Network for " %} {{ resource_type }}
 			{% if resource_type.photo %}
 			<img src="{% thumbnail resource_type.photo photo_size %}" />
