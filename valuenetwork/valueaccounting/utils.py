@@ -167,7 +167,29 @@ def explode_events(resource_type, backsked_date, events):
         for crt in pp.consumed_resource_types():
             explode_events(crt, start_date, events)
 
-def backshedule_events(process):
+def backschedule_process_types(commitment, process_type,events):
+    lead_time=1
+    arts = None
+    if commitment.from_agent:
+        arts = commitment.from_agent.resource_types.filter(resource_type=commitment.resource_type)
+    if arts:
+        lead_time = arts[0].lead_time
+    end_date = commitment.due_date - datetime.timedelta(days=lead_time)
+    start_date = end_date - datetime.timedelta(days=(process_type.estimated_duration/1440))
+    ppte = TimelineEvent(
+        process_type,
+        start_date,
+        end_date,
+        process_type.timeline_title(),
+        process_type.url,
+        process_type.description,
+    )
+    events['events'].append(ppte.dictify())
+    for crt in process_type.consumed_resource_types():
+        explode_events(crt, start_date, events)
+
+
+def backshedule_events(process, events):
     te = TimelineEvent(
         process,
         process.start_date,
@@ -176,7 +198,6 @@ def backshedule_events(process):
         process.url,
         process.notes,
     )
-    events = {'dateTimeFormat': 'Gregorian','events':[]}
     events['events'].append(te.dictify())
     for ic in process.incoming_commitments():
         te = TimelineEvent(
@@ -188,24 +209,7 @@ def backshedule_events(process):
             ic.description,
         )
         events['events'].append(te.dictify())
-        for pp in ic.resource_type.producing_process_types():
-            lead_time=1
-            if ic.from_agent:
-                arts = ic.from_agent.resource_types.filter(resource_type=ic.resource_type)
-            if arts:
-                lead_time = arts[0].lead_time
-            end_date = ic.due_date - datetime.timedelta(days=lead_time)
-            start_date = end_date - datetime.timedelta(days=(pp.estimated_duration/1440))
-            ppte = TimelineEvent(
-                pp,
-                start_date,
-                end_date,
-                pp.timeline_title(),
-                pp.url,
-                pp.description,
-            )
-            events['events'].append(ppte.dictify())
-            for crt in pp.consumed_resource_types():
-                explode_events(crt, start_date, events)
+        #for pp in ic.resource_type.producing_process_types():
+        #    backschedule_process_types(ic, pp,events)
 
     return events

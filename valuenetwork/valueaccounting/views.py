@@ -215,17 +215,19 @@ def network(request, resource_type_id):
     }, context_instance=RequestContext(request))
 
 def timeline(request):
-    process = Process.objects.get(pk=1)
     timeline_date = datetime.date.today().strftime("%b %e %Y 00:00:00 GMT-0600")
+    unassigned = Commitment.objects.filter(from_agent=None).order_by("due_date")
     return render_to_response("valueaccounting/timeline.html", {
-        "process": process,
         "timeline_date": timeline_date,
+        "unassigned": unassigned,
     }, context_instance=RequestContext(request))
 
 def json_timeline(request):
     #data = "{ 'wiki-url':'http://simile.mit.edu/shelf/', 'wiki-section':'Simile JFK Timeline', 'dateTimeFormat': 'Gregorian','events': [{'start':'May 28 2006 09:00:00 GMT-0600','title': 'Writing Timeline documentation','link':'http://google.com','description':'Write some doc already','durationEvent':false }, {'start': 'Jun 16 2006 00:00:00 GMT-0600' ,'end':  'Jun 26 2006 00:00:00 GMT-0600' ,'durationEvent':true,'title':'Friends wedding'}]}"
     #import pdb; pdb.set_trace()
-    process = Process.objects.get(pk=1)
-    events = backshedule_events(process)
+    processes = Process.objects.all()
+    events = {'dateTimeFormat': 'Gregorian','events':[]}
+    for process in processes:
+        backshedule_events(process, events)
     data = simplejson.dumps(events, ensure_ascii=False)
     return HttpResponse(data, mimetype="text/json-comment-filtered")

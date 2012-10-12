@@ -329,44 +329,6 @@ class ProcessTypeResourceType(models.Model):
             return "consumed by"        
 
 
-class Process(models.Model):
-    name = models.CharField(_('name'), max_length=128)
-    parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub_processes')
-    process_type = models.ForeignKey(ProcessType,
-        verbose_name=_('process type'), related_name='processes')
-    url = models.CharField(_('url'), max_length=255, blank=True)
-    start_date = models.DateField(_('start date'))
-    end_date = models.DateField(_('end date'), blank=True, null=True)
-    managed_by = models.ForeignKey(EconomicAgent, related_name="managed_processes",
-        verbose_name=_('managed by'), blank=True, null=True)
-    owner = models.ForeignKey(EconomicAgent, related_name="owned_processes",
-        verbose_name=_('owner'), blank=True, null=True)
-    notes = models.TextField(_('notes'), blank=True)
-    slug = models.SlugField(_("Page name"), editable=False)
-
-    class Meta:
-        ordering = ('name',)
-
-    def __unicode__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        slug = "-".join([
-            self.process_type.name,
-            self.name,
-            self.start_date.strftime('%Y-%m-%d'),
-        ])
-        unique_slugify(self, slug)
-        super(Process, self).save(*args, **kwargs)
-
-    def timeline_title(self):
-        return " ".join([self.name, "Process"])
-
-    def incoming_commitments(self):
-        return self.commitments.filter(to_agent__id=self.owner.id)
-
-
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
     parent = models.ForeignKey('self', blank=True, null=True, 
@@ -374,9 +336,6 @@ class Project(models.Model):
     project_team = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="project_team", verbose_name=_('project team'))
-    main_process = models.ForeignKey(Process,
-        blank=True, null=True,
-        verbose_name=_('main process'), related_name='project_process')
     importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("0"))
     slug = models.SlugField(_("Page name"), editable=False)
     
@@ -409,6 +368,48 @@ class Project(models.Model):
 
     def with_all_sub_projects(self):
         return flattened_children(self, Project.objects.all(), [])
+
+
+class Process(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub_processes')
+    process_type = models.ForeignKey(ProcessType,
+        verbose_name=_('process type'), related_name='processes')
+    project = models.ForeignKey(Project,
+        blank=True, null=True,
+        verbose_name=_('project'), related_name='processes')
+    url = models.CharField(_('url'), max_length=255, blank=True)
+    start_date = models.DateField(_('start date'))
+    end_date = models.DateField(_('end date'), blank=True, null=True)
+    managed_by = models.ForeignKey(EconomicAgent, related_name="managed_processes",
+        verbose_name=_('managed by'), blank=True, null=True)
+    owner = models.ForeignKey(EconomicAgent, related_name="owned_processes",
+        verbose_name=_('owner'), blank=True, null=True)
+    notes = models.TextField(_('notes'), blank=True)
+    slug = models.SlugField(_("Page name"), editable=False)
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name_plural = "processes"
+
+    def __unicode__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        slug = "-".join([
+            self.process_type.name,
+            self.name,
+            self.start_date.strftime('%Y-%m-%d'),
+        ])
+        unique_slugify(self, slug)
+        super(Process, self).save(*args, **kwargs)
+
+    def timeline_title(self):
+        return " ".join([self.name, "Process"])
+
+    def incoming_commitments(self):
+        return self.commitments.filter(to_agent__id=self.owner.id)
 
 
 RESOURCE_EFFECT_CHOICES = (

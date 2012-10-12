@@ -8,6 +8,48 @@
 {% block extra_head %}
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script src="http://api.simile-widgets.org/timeline/2.3.1/timeline-api.js?bundle=true,defaultLocale=en" type="text/javascript"></script>
+
+<style>
+
+	table
+	{
+		font-size: 100%; 
+		border-collapse: collapse; 
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;	
+	}
+
+	th
+	{
+		font-weight: bold;
+		color: gray;
+		background-color:#EAF2D3;
+		text-align: left;
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	td
+	{
+		border-style: solid; 
+		border-width: 1px; 
+		border-color: lightgrey;
+	}
+
+	th, td
+	{
+		padding-left:5px;
+	}
+
+	tr.even td 
+	{
+		color:#000000;
+		background-color:#EAF2D3;
+	}
+
+</style>
 {% endblock %}
 
 {% block body_class %}projects{% endblock %}
@@ -19,6 +61,49 @@
 		<p>{% trans "Double-click on months to slide days. Click on event in day to show details." %}</p>	
 		<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
 		<p style="color:red;">Note: this is test data, not meant to be accurate.</p>
+
+		{% if unassigned %}
+			<div>
+				<table>
+					<thead>
+						<th>Due Date</th>
+						<th>Process</th>
+						<th>Project</th>
+						<th>Description</th>
+						<th>Url</th>
+						<th>Role</th>
+						<th>Type</th>
+                        <th>&nbsp;</th>
+					</thead>
+					<tbody>
+						{% for c in unassigned %}
+							<tr class="{% cycle 'odd' 'even' %}">
+								<td>{{ c.due_date }}</td>
+								<td>{{ c.process }}</td>
+								<td>{{ c.project }}</td>
+								{% if c.description %}
+									<td>{{ c.description|urlize|linebreaks }}</td>
+								{% elif c.process.description %}
+									<td>{{ c.process.description|urlize|linebreaks }}</td>
+								{% else %}
+									<td>&nbsp;</td>
+								{% endif %}
+								{% if c.url %}
+									<td><a href="{{ c.url }}">Open</a></td>
+								{% elif c.process.url %}
+									<td><a href="{{ c.process.url }}">Open</a></td>
+								{% else %}
+									<td>&nbsp;</td>
+								{% endif %}
+								<td>{{ c.from_agent_role }}</td>
+								<td>{{ c.resource_type }}</td>
+								<td><button>Take it!</button></td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		{% endif %}
     </div>
 
 <script>
