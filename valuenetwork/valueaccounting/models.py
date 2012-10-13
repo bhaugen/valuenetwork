@@ -117,6 +117,22 @@ class EconomicAgent(models.Model):
     def color(self):
         return "green"
 
+    def produced_resource_types(self):
+        ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
+        return [ptrt.resource_type for ptrt in ptrts]
+
+    def consumed_resource_types(self):
+        ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
+        return [ptrt.resource_type for ptrt in ptrts]
+
+    def consumed_resource_type_relationships(self):
+        return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
+
+    def xbill_parents(self):
+        return self.produced_resource_types()
+
+    def xbill_children(self):
+        return []
 
 
 class AssociationType(models.Model):
@@ -203,6 +219,19 @@ class EconomicResourceType(models.Model):
         arts = self.agents.filter(direction='distributes')
         return [art.agent for art in arts]
 
+    def producers(self):
+        arts = self.agents.filter(direction='produces')
+        return [art.agent for art in arts]
+
+    def xbill_parents(self):
+        return self.consuming_process_types()
+
+    def xbill_children(self):
+        answer = []
+        answer.extend(self.producing_process_types())
+        answer.extend(self.producers())
+        answer.extend(self.distributors())
+        return answer
 
 class EconomicResource(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
@@ -308,6 +337,12 @@ class ProcessType(models.Model):
     def consumed_resource_type_relationships(self):
         return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
 
+    def xbill_parents(self):
+        return self.produced_resource_types()
+
+    def xbill_children(self):
+        return self.consumed_resource_types()
+
 
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
@@ -406,7 +441,8 @@ class Process(models.Model):
         super(Process, self).save(*args, **kwargs)
 
     def timeline_title(self):
-        return " ".join([self.name, "Process"])
+        #return " ".join([self.name, "Process"])
+        return self.name
 
     def incoming_commitments(self):
         return self.commitments.filter(to_agent__id=self.owner.id)

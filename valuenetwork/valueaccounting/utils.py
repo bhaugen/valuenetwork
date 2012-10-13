@@ -1,5 +1,6 @@
 import re
 import datetime
+from itertools import chain, imap
 from django.template.defaultfilters import slugify
 
 def split_thousands(n, sep=','):
@@ -91,7 +92,9 @@ class Edge(object):
         self.width = 1
 
 
-def explode(process_type_relationship, nodes, edges):
+def explode(process_type_relationship, nodes, edges, depth, depth_limit):
+    if depth > depth_limit:
+        return
     nodes.append(process_type_relationship.process_type)
     edges.append(Edge(
         process_type_relationship.process_type, 
@@ -105,16 +108,16 @@ def explode(process_type_relationship, nodes, edges):
             nodes.append(art.agent)
             edges.append(Edge(art.agent, rtr.resource_type, art.direction))
         for pt in rtr.resource_type.producing_process_type_relationships():
-            explode(pt, nodes, edges)
+            explode(pt, nodes, edges, depth+1, depth_limit)
 
-def graphify(focus):
+def graphify(focus, depth_limit):
     nodes = [focus]
     edges = []
     for art in focus.consuming_agent_relationships():
         nodes.append(art.agent)
         edges.append(Edge(focus, art.agent, art.direction))
     for ptr in focus.producing_process_type_relationships():
-        explode(ptr, nodes, edges)
+        explode(ptr, nodes, edges, 0, depth_limit)
     return [nodes, edges]
 
 class TimelineEvent(object):
@@ -213,3 +216,84 @@ def backshedule_events(process, events):
         #    backschedule_process_types(ic, pp,events)
 
     return events
+
+class XbillNode(object):
+    def __init__(self, node, depth):
+         self.node = node
+         self.depth = depth
+
+
+def xbill_dfs(node, all_nodes, depth):
+    """
+    Performs a recursive depth-first search starting at ``node``. 
+    """
+    to_return = [XbillNode(node,depth),]
+    for subnode in all_nodes:
+        parents = subnode.xbill_parents()
+        if parents and node in parents:
+            to_return.extend(xbill_dfs(subnode, all_nodes, depth+1))
+    return to_return
+
+def explode_xbill_children(node, nodes):
+    nodes.append(node)
+    for kid in node.xbill_children():
+        explode_xbill_children(kid, nodes)
+
+def generate_xbill(resource_type):
+    nodes = []
+    explode_xbill_children(resource_type, nodes)
+    #import pdb; pdb.set_trace()
+    nodes = list(set(nodes))
+    to_return = []
+    to_return.extend(xbill_dfs(resource_type, nodes, 0))
+    return to_return
+
+
+#adapted from threaded_comments.util
+def annotate_tree_properties(comments):
+    """
+    iterate through nodes and adds some magic properties to each of them
+    representing opening list of children and closing it
+    """
+    if not comments:
+        return
+
+    it = iter(comments)
+
+    # get the first item, this will fail if no items !
+    old = it.next()
+
+    # first item starts a new thread
+    old.open = True
+    last = set()
+    for c in it:
+        # if this comment has a parent, store its last child for future reference
+        if old.last_child_id:
+            last.add(old.last_child_id)
+
+        # this is the last child, mark it
+        if c.pk in last:
+            c.last = True
+
+        # increase the depth
+        if c.depth > old.depth:
+            c.open = True
+
+        else: # c.depth <= old.depth
+            # close some depths
+            old.close = range(old.depth - c.depth)
+
+            # new thread
+            if old.root_id != c.root_id:
+                # close even the top depth
+                old.close.append(len(old.close))
+                # and start a new thread
+                c.open = True
+                # empty the last set
+                last = set()
+        # iterate
+        yield old
+        old = c
+
+    old.close = range(old.depth)
+    yield old

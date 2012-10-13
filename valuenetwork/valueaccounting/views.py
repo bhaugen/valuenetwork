@@ -206,7 +206,7 @@ def extended_bill(request, resource_type_id):
 def network(request, resource_type_id):
     #import pdb; pdb.set_trace()
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
-    nodes, edges = graphify(rt)
+    nodes, edges = graphify(rt, 3)
     return render_to_response("valueaccounting/network.html", {
         "resource_type": rt,
         "photo_size": (128, 128),

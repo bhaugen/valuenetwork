@@ -33,7 +33,12 @@
 			</li>
 				<ul>
 				{% for rt in pt.consumed_resource_types %}
-					<li><h4>{{ rt }}</h4></li>
+					<li><h4>
+						{{ rt }}
+						{% if rt.photo %}
+							<img src="{% thumbnail rt.photo photo_size %}" />
+						{% endif %}
+					</h4></li>
 					{% for pt2 in rt.producing_process_types %}
 						<h4 class="process-title" >{{ pt2 }}:</h4>
 						{% if pt2.consumed_resource_types %}
