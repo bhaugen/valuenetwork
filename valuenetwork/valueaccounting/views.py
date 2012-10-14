@@ -198,8 +198,10 @@ def value_equation(request, project_id):
 
 def extended_bill(request, resource_type_id):
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    nodes = generate_xbill(rt)
     return render_to_response("valueaccounting/extended_bill.html", {
         "resource_type": rt,
+        "nodes": nodes,
         "photo_size": (128, 128),
     }, context_instance=RequestContext(request))
 

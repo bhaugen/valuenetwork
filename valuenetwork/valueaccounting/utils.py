@@ -221,6 +221,8 @@ class XbillNode(object):
     def __init__(self, node, depth):
          self.node = node
          self.depth = depth
+         self.open = False
+         self.close = []
 
 
 def xbill_dfs(node, all_nodes, depth):
@@ -246,34 +248,27 @@ def generate_xbill(resource_type):
     nodes = list(set(nodes))
     to_return = []
     to_return.extend(xbill_dfs(resource_type, nodes, 0))
+    annotate_tree_properties(to_return)
     return to_return
 
 
 #adapted from threaded_comments.util
-def annotate_tree_properties(comments):
+def annotate_tree_properties(nodes):
     """
     iterate through nodes and adds some magic properties to each of them
     representing opening list of children and closing it
     """
-    if not comments:
+    if not nodes:
         return
 
-    it = iter(comments)
+    it = iter(nodes)
 
     # get the first item, this will fail if no items !
     old = it.next()
 
     # first item starts a new thread
     old.open = True
-    last = set()
     for c in it:
-        # if this comment has a parent, store its last child for future reference
-        if old.last_child_id:
-            last.add(old.last_child_id)
-
-        # this is the last child, mark it
-        if c.pk in last:
-            c.last = True
 
         # increase the depth
         if c.depth > old.depth:
@@ -283,17 +278,8 @@ def annotate_tree_properties(comments):
             # close some depths
             old.close = range(old.depth - c.depth)
 
-            # new thread
-            if old.root_id != c.root_id:
-                # close even the top depth
-                old.close.append(len(old.close))
-                # and start a new thread
-                c.open = True
-                # empty the last set
-                last = set()
         # iterate
-        yield old
         old = c
 
     old.close = range(old.depth)
-    yield old
+
