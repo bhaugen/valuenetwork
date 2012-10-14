@@ -7,35 +7,44 @@
 
 {% block extra_head %}
 <style>
-.process-title {
-	font-style: italic;
-	font-size: 110%;
-	font-weight: normal;
+h4 {
+	margin-top: 1em; 
+	margin-bottom: 1em;
+} 
+h4 a {
+	font-size: 1.4em;
 }
 
 ul {
 	list-style-type:none;
+	margin-left: 0;
 }
 
 .xb ul {
-	border: 1px solid lightgrey;
+	margin-top: .8em;
 }
 
 .xb li {
-	border: 1px solid lightgrey; 
+	border: 1px solid gainsboro; 
 	padding: 1em;
+	font-weight: bold;
 }
 
 .economic-agent {
-	background-color: lightblue;
+	background-color: whitesmoke;
 }
 
 .economic-resource-type {
-	background-color: pink;
+	background-color: lightyellow;
 }
 
 .process-type {
-	background-color: yellow;
+	background-color: beige;
+}
+
+.description {
+	font-style: italic;
+	font-weight: normal;
 }
 </style>
 {% endblock %}
@@ -48,14 +57,14 @@ ul {
 	<div>
 		<h1>{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}</h1>
 
-        <h4 style="margin-top: 1em; margin-bottom: 1em;" >
+        <h4>
 			{% if resource_type.url %}
 				<a href="{{ resource_type.url }}" target="blank">{{ resource_type }}</a>
 			{% else %}
 				{{ resource_type }}
 			{% endif %}
 			{% if resource_type.photo %}
-				<img src="{% thumbnail resource_type.photo photo_size %}" />
+				<img src="{% thumbnail resource_type.photo big_photo_size %}" />
 			{% endif %}
 		</h4>
 		{% if resource_type.description %}

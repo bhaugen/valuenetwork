@@ -203,6 +203,7 @@ def extended_bill(request, resource_type_id):
         "resource_type": rt,
         "nodes": nodes,
         "photo_size": (128, 128),
+        "big_photo_size": (200, 200),
     }, context_instance=RequestContext(request))
 
 def network(request, resource_type_id):
