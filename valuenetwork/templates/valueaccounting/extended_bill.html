@@ -12,6 +12,31 @@
 	font-size: 110%;
 	font-weight: normal;
 }
+
+ul {
+	list-style-type:none;
+}
+
+.xb ul {
+	border: 1px solid lightgrey;
+}
+
+.xb li {
+	border: 1px solid lightgrey; 
+	padding: 1em;
+}
+
+.economic-agent {
+	background-color: lightblue;
+}
+
+.economic-resource-type {
+	background-color: pink;
+}
+
+.process-type {
+	background-color: yellow;
+}
 </style>
 {% endblock %}
 
@@ -22,17 +47,45 @@
         {% include "_messages.html" %}
 	<div>
 		<h1>{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}</h1>
+
+        <h4 style="margin-top: 1em; margin-bottom: 1em;" >
+			{% if resource_type.url %}
+				<a href="{{ resource_type.url }}" target="blank">{{ resource_type }}</a>
+			{% else %}
+				{{ resource_type }}
+			{% endif %}
+			{% if resource_type.photo %}
+				<img src="{% thumbnail resource_type.photo photo_size %}" />
+			{% endif %}
+		</h4>
+		{% if resource_type.description %}
+			<div class="description" >{{ resource_type.description|linebreaks }}</div>
+		{% endif %}
+
 		{% for node in nodes %}
 			{% if not node.open and not node.close %}
 				</li>
 			{% endif %}
     
 			{% if node.open %}
-    				<ul>
+    				<ul class="xb" >
 			{% endif %}
 
-			<li>
-				{{ node.node }}
+			<li  class="xb  {{ node.xbill_class }}" >
+				{{ node.xbill_label }}
+				{% if node.xbill_object.url %}
+					<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
+				{% else %}
+					 {{ node.xbill_object }}
+				{% endif %}
+
+				{% if node.xbill_object.photo %}
+					<img src="{% thumbnail node.xbill_object.photo photo_size %}" />
+				{% endif %}
+
+				{% if node.xbill_object.description %}
+					<div class="description" >{{ node.xbill_object.description|linebreaks }}</div>
+				{% endif %}
 
 			{% for close in node.close %}
     			</li>

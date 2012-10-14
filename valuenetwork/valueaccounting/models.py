@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
 
 from easy_thumbnails.fields import ThumbnailerImageField
 
@@ -121,6 +122,9 @@ class EconomicAgent(models.Model):
         ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
         return [ptrt.resource_type for ptrt in ptrts]
 
+    def produced_resource_type_relationships(self):
+        return self.resource_types.exclude(direction='consumes').exclude(direction='uses')
+
     def consumed_resource_types(self):
         ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
         return [ptrt.resource_type for ptrt in ptrts]
@@ -129,10 +133,10 @@ class EconomicAgent(models.Model):
         return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
 
     def xbill_parents(self):
-        return self.produced_resource_types()
+        return self.produced_resource_type_relationships()
 
     def xbill_children(self):
-        return []
+        return []      
 
 
 class AssociationType(models.Model):
@@ -219,19 +223,31 @@ class EconomicResourceType(models.Model):
         arts = self.agents.filter(direction='distributes')
         return [art.agent for art in arts]
 
+    def distributor_relationships(self):
+        return self.agents.filter(direction='distributes')
+
+    def producer_relationships(self):
+        return self.agents.exclude(direction='consumes').exclude(direction__contains='use').exclude(direction='distributes')
+
     def producers(self):
-        arts = self.agents.filter(direction='produces')
+        arts = self.producer_relationships()
         return [art.agent for art in arts]
 
     def xbill_parents(self):
-        return self.consuming_process_types()
+        return self.consuming_process_type_relationships()
 
     def xbill_children(self):
         answer = []
-        answer.extend(self.producing_process_types())
-        answer.extend(self.producers())
-        answer.extend(self.distributors())
+        answer.extend(self.producing_process_type_relationships())
+        answer.extend(self.producer_relationships())
+        answer.extend(self.distributor_relationships())
         return answer
+
+    def xbill_child_object(self):
+        return self
+
+    def xbill_parent_object(self):
+        return self
 
 class EconomicResource(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
@@ -263,12 +279,13 @@ class EconomicResource(models.Model):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
 
-
+#todo: need nice direction label + simple increment or decrement
 DIRECTION_CHOICES = (
     ('consumes', 'consumes'),
     ('uses', 'uses'),
     ('potential user', 'potential user'),
     ('produces', 'produces'),
+    ('provides', 'provides'),
     ('distributes', 'distributes'),
 )
 
@@ -296,6 +313,30 @@ class AgentResourceType(models.Model):
     def timeline_title(self):
         return " ".join(["Get ", self.resource_type.name, "from ", self.agent.name])
 
+    def inverse_label(self):
+        s = self.direction
+        if s[len(s)-1] == "s":
+            return "".join([s[0:len(s)-1], 'd by'])
+        else:
+            return self.direction
+
+    def xbill_label(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.inverse_label()
+        else:
+            return self.direction
+
+    def xbill_child_object(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.agent
+        else:
+            return self.resource_type
+
+    def xbill_parent_object(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.resource_type
+        else:
+            return self.agent
 
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
@@ -330,6 +371,9 @@ class ProcessType(models.Model):
         ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
         return [ptrt.resource_type for ptrt in ptrts]
 
+    def produced_resource_type_relationships(self):
+        return self.resource_types.exclude(direction='consumes').exclude(direction='uses')
+
     def consumed_resource_types(self):
         ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
         return [ptrt.resource_type for ptrt in ptrts]
@@ -338,10 +382,10 @@ class ProcessType(models.Model):
         return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
 
     def xbill_parents(self):
-        return self.produced_resource_types()
+        return self.produced_resource_type_relationships()
 
     def xbill_children(self):
-        return self.consumed_resource_types()
+        return self.consumed_resource_type_relationships()
 
 
 class ProcessTypeResourceType(models.Model):
@@ -355,14 +399,32 @@ class ProcessTypeResourceType(models.Model):
         verbose_name=_('unit'), related_name="process_resource_qty_units")
 
     def __unicode__(self):
-        return " ".join([self.process_type.name, self.direction, str(self.quantity), self.resource_type.name])
+        return " ".join([self.process_type.name, self.direction, str(self.quantity), self.resource_type.name])        
 
-    def diagram_input_label(self):
-        if self.direction == "uses":
-            return "used by"
-        if self.direction == "consumes":
-            return "consumed by"        
+    def inverse_label(self):
+        s = self.direction
+        if s[len(s)-1] == "s":
+            return "".join([s[0:len(s)-1], 'd by'])
+        else:
+            return self.direction
 
+    def xbill_label(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.inverse_label()
+        else:
+            return " ".join([self.direction, str(self.quantity), self.unit_of_quantity.abbrev])
+
+    def xbill_child_object(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.process_type
+        else:
+            return self.resource_type
+
+    def xbill_parent_object(self):
+        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+            return self.resource_type
+        else:
+            return self.process_type
 
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 

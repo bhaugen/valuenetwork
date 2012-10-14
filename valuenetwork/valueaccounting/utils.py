@@ -2,6 +2,7 @@ import re
 import datetime
 from itertools import chain, imap
 from django.template.defaultfilters import slugify
+from django.contrib.contenttypes.models import ContentType
 
 def split_thousands(n, sep=','):
     s = str(n)
@@ -103,7 +104,7 @@ def explode(process_type_relationship, nodes, edges, depth, depth_limit):
     ))
     for rtr in process_type_relationship.process_type.consumed_resource_type_relationships():
         nodes.append(rtr.resource_type)
-        edges.append(Edge(rtr.resource_type, process_type_relationship.process_type, rtr.diagram_input_label()))
+        edges.append(Edge(rtr.resource_type, process_type_relationship.process_type, rtr.inverse_label()))
         for art in rtr.resource_type.producing_agent_relationships():
             nodes.append(art.agent)
             edges.append(Edge(art.agent, rtr.resource_type, art.direction))
@@ -224,6 +225,16 @@ class XbillNode(object):
          self.open = False
          self.close = []
 
+    def xbill_object(self):
+        return self.node.xbill_child_object()
+
+    def xbill_label(self):
+        return self.node.xbill_label()
+
+    def xbill_class(self):
+        ct = ContentType.objects.get_for_model(self.xbill_object().__class__)
+        return "-".join(ct.name.split())
+
 
 def xbill_dfs(node, all_nodes, depth):
     """
@@ -231,23 +242,25 @@ def xbill_dfs(node, all_nodes, depth):
     """
     to_return = [XbillNode(node,depth),]
     for subnode in all_nodes:
-        parents = subnode.xbill_parents()
+        parents = subnode.xbill_parent_object().xbill_parents()
         if parents and node in parents:
             to_return.extend(xbill_dfs(subnode, all_nodes, depth+1))
     return to_return
 
 def explode_xbill_children(node, nodes):
     nodes.append(node)
-    for kid in node.xbill_children():
+    for kid in node.xbill_child_object().xbill_children():
         explode_xbill_children(kid, nodes)
 
 def generate_xbill(resource_type):
     nodes = []
-    explode_xbill_children(resource_type, nodes)
+    for kid in resource_type.xbill_children():
+        explode_xbill_children(kid, nodes)
     #import pdb; pdb.set_trace()
     nodes = list(set(nodes))
     to_return = []
-    to_return.extend(xbill_dfs(resource_type, nodes, 0))
+    for kid in resource_type.xbill_children():
+        to_return.extend(xbill_dfs(kid, nodes, 0))
     annotate_tree_properties(to_return)
     return to_return
 
