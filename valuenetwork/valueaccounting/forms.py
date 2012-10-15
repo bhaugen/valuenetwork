@@ -40,18 +40,9 @@ class EquationForm(forms.Form):
         safe_dict['importance'] = 1
         safe_dict['reputation'] = 1
         safe_dict['seniority'] = 1
-        eq = equation.split(" ")
-        for i, x in enumerate(eq):
-            try:
-                y = Decimal(x)
-                eq[i] = "".join(["Decimal('", x, "')"])
-            except InvalidOperation:
-                continue
-        s = " "
-        eq = s.join(eq)
 
         try:
-            eval(eq, {"__builtins__":None}, safe_dict)
+            eval(equation, {"__builtins__":None}, safe_dict)
         except NameError:
             raise forms.ValidationError(sys.exc_info()[1])
         except SyntaxError:

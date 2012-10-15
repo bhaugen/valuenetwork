@@ -155,13 +155,17 @@ def value_equation(request, project_id):
             equation = s.join(eq)
             agent_sums = {}
             total = Decimal("0.00")
+            safe_list = ['math',]
+            safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+            safe_dict['Decimal'] = Decimal
+            #import pdb; pdb.set_trace()
             for summary in summaries:
-                safe_dict = {}
                 safe_dict['hours'] = summary.quantity
                 safe_dict['rate'] = summary.role_rate
                 safe_dict['importance'] = summary.importance
                 safe_dict['reputation'] = summary.reputation
-                safe_dict['seniority'] = summary.agent.seniority()
+                safe_dict['seniority'] = Decimal(summary.agent.seniority())
+                #import pdb; pdb.set_trace()
                 summary.value = eval(equation, {"__builtins__":None}, safe_dict)
                 agent = summary.agent
                 if not agent.id in agent_sums:
