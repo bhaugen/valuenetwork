@@ -79,7 +79,11 @@
 					<tbody>
 						{% for c in unassigned %}
 							<tr class="{% cycle 'odd' 'even' %}">
-								<td>{{ c.due_date }}</td>
+								<td>
+									<a href="#" class="duedate" title="Click to locate on Timeline">
+										{{ c.due_date }}
+									</a>
+								</td>
 								<td>{{ c.process }}</td>
 								<td>{{ c.project }}</td>
 								{% if c.description %}
@@ -143,6 +147,13 @@ $(document).ready(function() {
 	tl.loadJSON("{% url json_timeline %}", function(data, url) {
     	eventSource.loadJSON(data, url);
   	});
+
+	$(".duedate").click(function() 
+	{
+		var date = this.text;
+		tl.getBand(0).setCenterVisibleDate(Timeline.DateTime.parseGregorianDateTime(date));
+	});
+
  });
 
  var resizeTimerID = null;
