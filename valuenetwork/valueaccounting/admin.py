@@ -9,6 +9,12 @@ admin.site.register(AgentType)
 admin.site.register(Role)
 
 
+class ResourceRelationshipAdmin(admin.ModelAdmin):
+    list_display = ('name', 'inverse_name', 'resource_effect' )
+
+admin.site.register(ResourceRelationship, ResourceRelationshipAdmin)
+
+
 class EconomicAgentAdmin(admin.ModelAdmin):
     list_display = ('nick', 'name', 'agent_type', 'url', 'address', 'email', 'created_date')
     list_filter = ['agent_type',]
@@ -26,14 +32,14 @@ admin.site.register(EconomicResourceType, EconomicResourceTypeAdmin)
 
 
 class AgentResourceTypeAdmin(admin.ModelAdmin):
-    list_display = ('agent', 'resource_type', 'direction')
+    list_display = ('agent', 'resource_type', 'relationship')
     list_filter = ['agent', 'resource_type']
     
 admin.site.register(AgentResourceType, AgentResourceTypeAdmin)
 
 
 class ProcessTypeResourceTypeAdmin(admin.ModelAdmin):
-    list_display = ('process_type', 'resource_type', 'direction')
+    list_display = ('process_type', 'resource_type', 'relationship')
     list_filter = ['process_type', 'resource_type']
     
 admin.site.register(ProcessTypeResourceType, ProcessTypeResourceTypeAdmin)

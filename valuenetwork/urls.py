@@ -21,6 +21,7 @@ databrowse.site.register(
     ProcessType, 
     ProcessTypeResourceType,
     Project,
+    ResourceRelationship,
     Role,
     Commitment,
     EconomicEvent,

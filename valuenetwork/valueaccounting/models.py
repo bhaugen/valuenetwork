@@ -118,19 +118,17 @@ class EconomicAgent(models.Model):
     def color(self):
         return "green"
 
-    def produced_resource_types(self):
-        ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
-        return [ptrt.resource_type for ptrt in ptrts]
-
     def produced_resource_type_relationships(self):
-        return self.resource_types.exclude(direction='consumes').exclude(direction='uses')
+        return self.resource_types.filter(relationship__resource_effect='+')
 
-    def consumed_resource_types(self):
-        ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
-        return [ptrt.resource_type for ptrt in ptrts]
+    def produced_resource_types(self):
+        return [ptrt.resource_type for ptrt in self.produced_resource_type_relationships()]
 
     def consumed_resource_type_relationships(self):
-        return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
+        return self.resource_types.exclude(relationship__resource_effect='+')
+
+    def consumed_resource_types(self):
+        return [ptrt.resource_type for ptrt in self.consumed_resource_type_relationships()]
 
     def xbill_parents(self):
         return self.produced_resource_type_relationships()
@@ -191,43 +189,39 @@ class EconomicResourceType(models.Model):
     def color(self):
         return "red"
 
-    def producing_process_types(self):
-        pts = self.process_types.exclude(direction='consumes').exclude(direction__contains='use')
-        return [pt.process_type for pt in pts]
-
     def producing_process_type_relationships(self):
-        return self.process_types.exclude(direction='consumes').exclude(direction__contains='use')
+        return self.process_types.filter(relationship__resource_effect='+')
 
-    def consuming_process_types(self):
-        pts = self.process_types.exclude(direction='produces').exclude(direction='distributes')
-        return [pt.process_type for pt in pts]
+    def producing_process_types(self):
+        return [pt.process_type for pt in self.producing_process_type_relationships()]
 
     def consuming_process_type_relationships(self):
-        return self.process_types.exclude(direction='produces').exclude(direction='distributes')
+        return self.process_types.exclude(relationship__resource_effect='+')
 
-    def consuming_agents(self):
-        arts = self.agents.exclude(direction='produces').exclude(direction='distributes')
-        return [art.agent for art in arts]
-
-    def producing_agents(self):
-        arts = self.agents.exclude(direction='consumes').exclude(direction__contains='use')
-        return [art.agent for art in arts]
+    def consuming_process_types(self):
+        return [pt.process_type for pt in self.consuming_process_type_relationships()]
 
     def producing_agent_relationships(self):
-        return self.agents.exclude(direction='consumes').exclude(direction__contains='use')
+        return self.agents.filter(relationship__resource_effect='+')
 
     def consuming_agent_relationships(self):
-        return self.agents.exclude(direction='produces').exclude(direction='distributes')
+        return self.agents.exclude(relationship__resource_effect='+')
+
+    def consuming_agents(self):
+        return [art.agent for art in self.consuming_agent_relationships()]
+
+    def producing_agents(self):
+        return [art.agent for art in self.producing_agent_relationships()]
+
+    #todo: hacks based on name 'distributes' which is user-changeable
+    def distributor_relationships(self):
+        return self.agents.filter(relationship__name='distributes')
 
     def distributors(self):
-        arts = self.agents.filter(direction='distributes')
-        return [art.agent for art in arts]
-
-    def distributor_relationships(self):
-        return self.agents.filter(direction='distributes')
+        return [art.agent for art in self.distributor_relationships()]
 
     def producer_relationships(self):
-        return self.agents.exclude(direction='consumes').exclude(direction__contains='use').exclude(direction='distributes')
+        return self.agents.filter(relationship__resource_effect='+').exclude(relationship__name='distributes')
 
     def producers(self):
         arts = self.producer_relationships()
@@ -279,16 +273,6 @@ class EconomicResource(models.Model):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
 
-#todo: need nice direction label + simple increment or decrement
-DIRECTION_CHOICES = (
-    ('consumes', 'consumes'),
-    ('uses', 'uses'),
-    ('potential user', 'potential user'),
-    ('produces', 'produces'),
-    ('provides', 'provides'),
-    ('distributes', 'distributes'),
-)
-
 
 RESOURCE_EFFECT_CHOICES = (
     ('+', _('increase')),
@@ -299,8 +283,27 @@ RESOURCE_EFFECT_CHOICES = (
 
 class ResourceRelationship(models.Model):
     name = models.CharField(_('name'), max_length=32)
+    inverse_name = models.CharField(_('name'), max_length=40, blank=True)
     resource_effect = models.CharField(_('resource effect'), 
         max_length=12, choices=RESOURCE_EFFECT_CHOICES)
+
+    class Meta:
+        ordering = ('name', )
+
+    def __unicode__(self):
+        return self.name
+
+    def inverse_label(self):
+        if self.inverse_name:
+            return self.inverse_name
+        else:
+            return self.name
+
+    def infer_label(self):
+        if self.resource_effect == "+":
+            return self.inverse_name
+        else:
+            return self.name
 
 
 class AgentResourceType(models.Model):
@@ -308,7 +311,6 @@ class AgentResourceType(models.Model):
         verbose_name=_('agent'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='agents')
-    direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='agent_resource_types')
@@ -330,26 +332,19 @@ class AgentResourceType(models.Model):
         return " ".join(["Get ", self.resource_type.name, "from ", self.agent.name])
 
     def inverse_label(self):
-        s = self.direction
-        if s[len(s)-1] == "s":
-            return "".join([s[0:len(s)-1], 'd by'])
-        else:
-            return self.direction
+        return self.relationship.inverse_label()
 
     def xbill_label(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
-            return self.inverse_label()
-        else:
-            return self.direction
+        return self.relationship.infer_label()
 
     def xbill_child_object(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+        if self.relationship.resource_effect == '+':
             return self.agent
         else:
             return self.resource_type
 
     def xbill_parent_object(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+        if self.relationship.resource_effect == '+':
             return self.resource_type
         else:
             return self.agent
@@ -383,19 +378,18 @@ class ProcessType(models.Model):
     def color(self):
         return "blue"
 
-    def produced_resource_types(self):
-        ptrts = self.resource_types.exclude(direction='consumes').exclude(direction='uses')
-        return [ptrt.resource_type for ptrt in ptrts]
-
     def produced_resource_type_relationships(self):
-        return self.resource_types.exclude(direction='consumes').exclude(direction='uses')
+        return self.resource_types.filter(relationship__resource_effect='+')
 
-    def consumed_resource_types(self):
-        ptrts = self.resource_types.exclude(direction='produces').exclude(direction='distributes')
-        return [ptrt.resource_type for ptrt in ptrts]
+    def produced_resource_types(self):
+        return [ptrt.resource_type for ptrt in self.produced_resource_type_relationships()]
+
 
     def consumed_resource_type_relationships(self):
-        return self.resource_types.exclude(direction='produces').exclude(direction='distributes')
+        return self.resource_types.exclude(relationship__resource_effect='+')
+
+    def consumed_resource_types(self):
+        return [ptrt.resource_type for ptrt in self.consumed_resource_type_relationships()]
 
     def xbill_parents(self):
         return self.produced_resource_type_relationships()
@@ -409,7 +403,6 @@ class ProcessTypeResourceType(models.Model):
         verbose_name=_('process type'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='process_types')
-    direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='process_resource_types')
@@ -421,26 +414,23 @@ class ProcessTypeResourceType(models.Model):
         return " ".join([self.process_type.name, self.relationship.name, str(self.quantity), self.resource_type.name])        
 
     def inverse_label(self):
-        s = self.direction
-        if s[len(s)-1] == "s":
-            return "".join([s[0:len(s)-1], 'd by'])
-        else:
-            return self.direction
+        return self.relationship.inverse_label()
 
     def xbill_label(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+        if self.relationship.resource_effect == "+":
             return self.inverse_label()
         else:
-            return " ".join([self.direction, str(self.quantity), self.unit_of_quantity.abbrev])
+           return " ".join([self.relationship.name, str(self.quantity), self.unit_of_quantity.abbrev])
+
 
     def xbill_child_object(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+        if self.relationship.resource_effect == "+":
             return self.process_type
         else:
             return self.resource_type
 
     def xbill_parent_object(self):
-        if self.direction == "produces" or self.direction == "provides" or self.direction == "distributes":
+        if self.relationship.resource_effect == "+":
             return self.resource_type
         else:
             return self.process_type
