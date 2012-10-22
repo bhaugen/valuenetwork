@@ -290,12 +290,28 @@ DIRECTION_CHOICES = (
 )
 
 
+RESOURCE_EFFECT_CHOICES = (
+    ('+', _('increase')),
+    ('-', _('decrease')),
+    ('x', _('transfer')), #means - for from_agent, + for to_agent
+    ('=', _('no effect')),
+)
+
+class ResourceRelationship(models.Model):
+    name = models.CharField(_('name'), max_length=32)
+    resource_effect = models.CharField(_('resource effect'), 
+        max_length=12, choices=RESOURCE_EFFECT_CHOICES)
+
+
 class AgentResourceType(models.Model):
     agent = models.ForeignKey(EconomicAgent,
         verbose_name=_('agent'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='agents')
     direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
+    relationship = models.ForeignKey(ResourceRelationship,
+        blank=True, null=True,
+        verbose_name=_('relationship'), related_name='agent_resource_types')
     lead_time = models.IntegerField(_('lead time'), 
         default=0, help_text=_("in days"))
     value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
@@ -306,7 +322,7 @@ class AgentResourceType(models.Model):
     def __unicode__(self):
         return ' '.join([
             self.agent.name,
-            self.direction,
+            self.relationship.name,
             self.resource_type.name,
         ])
 
@@ -394,12 +410,15 @@ class ProcessTypeResourceType(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='process_types')
     direction = models.CharField(_('direction'), max_length=12, choices=DIRECTION_CHOICES)
+    relationship = models.ForeignKey(ResourceRelationship,
+        blank=True, null=True,
+        verbose_name=_('relationship'), related_name='process_resource_types')
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="process_resource_qty_units")
 
     def __unicode__(self):
-        return " ".join([self.process_type.name, self.direction, str(self.quantity), self.resource_type.name])        
+        return " ".join([self.process_type.name, self.relationship.name, str(self.quantity), self.resource_type.name])        
 
     def inverse_label(self):
         s = self.direction
@@ -447,6 +466,7 @@ class Project(models.Model):
         super(Project, self).save(*args, **kwargs)
 
     def time_contributions(self):
+        #todo: hack
         et = EventType.objects.get(name='Time Contribution')
         return sum(event.quantity for event in self.events.filter(
             event_type=et))
@@ -509,13 +529,6 @@ class Process(models.Model):
     def incoming_commitments(self):
         return self.commitments.filter(to_agent__id=self.owner.id)
 
-
-RESOURCE_EFFECT_CHOICES = (
-    ('+', _('increase')),
-    ('-', _('decrease')),
-    ('xfer', _('transfer')),
-    ('none', _('no effect')),
-)
 
 class EventType(models.Model):
     name = models.CharField(_('name'), max_length=128)
