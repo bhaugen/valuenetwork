@@ -3,6 +3,35 @@ from decimal import *
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from valuenetwork.valueaccounting.models import *
+
+
+class EconomicResourceTypeForm(forms.ModelForm):
+    
+    class Meta:
+        model = EconomicResourceType
+
+
+class AgentResourceTypeForm(forms.ModelForm):
+    
+    class Meta:
+        model = AgentResourceType
+        exclude = ('resource_type',)
+
+
+class ProcessTypeForm(forms.ModelForm):
+    
+    class Meta:
+        model = ProcessType
+
+
+class ProcessTypeResourceTypeForm(forms.ModelForm):
+    
+    class Meta:
+        model = ProcessTypeResourceType
+        exclude = ('process_type',)
+
+
 class TimeForm(forms.Form):
 
     description = forms.CharField(

@@ -1,0 +1,234 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load thumbnail %}
+{% load bootstrap_tags %}
+
+{% block head_title %}{% trans " Edit Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}{% endblock %}
+
+{% block extra_head %}
+
+<style>
+h4 {
+	margin-top: 1em; 
+	margin-bottom: 1em;
+} 
+h4 a {
+	font-size: 1.4em;
+}
+
+ul {
+	list-style-type:none;
+	margin-left: 0;
+}
+
+.xb ul {
+	margin-top: .8em;
+}
+
+.xb li {
+	border: 1px solid gainsboro; 
+	padding: 1em;
+	font-weight: bold;
+}
+
+.economic-agent {
+	background-color: whitesmoke;
+}
+
+.economic-resource-type {
+	background-color: lightyellow;
+}
+
+.process-type {
+	background-color: beige;
+}
+
+.description {
+	font-style: italic;
+	font-weight: normal;
+}
+</style>
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>{% trans "Edit Extended Bill for " %} {{ resource_type }}</h1>
+
+        <h4>
+			{% if resource_type.url %}
+				<a href="{{ resource_type.url }}" target="blank">{{ resource_type }}</a>
+			{% else %}
+				{{ resource_type }}
+			{% endif %}
+			{% if resource_type.photo %}
+				<img src="{% thumbnail resource_type.photo big_photo_size %}" />
+			{% endif %}
+			<div style="display: inline;">
+		        <button class="btn btn-primary" type="submit">Change</button>
+		    </div>
+		</h4>
+		{% if resource_type.description %}
+			<div class="description" >{{ resource_type.description|linebreaks }}</div>
+		{% endif %}
+
+		{% for node in nodes %}
+			{% if not node.open and not node.close %}
+				</li>
+			{% endif %}
+    
+			{% if node.open %}
+    				<ul class="xb" >
+			{% endif %}
+
+			{% with xb_type=node.xbill_class %}
+
+				<li  class="xb  {{ xb_type }}" >
+{% comment %}
+					<p>xbill node: {{ node.node }} Id: {{ node.node.node_id }} </p>
+					<p>xbill_object: {{ node.xbill_object }} Id: {{ node.xbill_object.node_id }}</p>
+{% endcomment %}
+
+					{{ node.xbill_explanation }}: {{ node.xbill_label }}
+
+					{% if node.xbill_object.url %}
+						<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
+					{% else %}
+						 {{ node.xbill_object }}
+					{% endif %}
+
+					{% if node.xbill_object.photo %}
+						<img src="{% thumbnail node.xbill_object.photo photo_size %}" />
+					{% endif %}
+
+					<div style="display: inline;">
+				    	<button class="btn btn-primary" type="submit">Change</button>
+					</div>
+
+					{% if node.xbill_object.description %}
+						<div class="description" >{{ node.xbill_object.description|linebreaks }}</div>
+					{% endif %}
+
+{% comment %}
+						{% if xb_type == "economic-agent" %}
+						<div>
+							<a href="#sourceForm{{ node.node.node_id }}" role="button" class="btn" data-toggle="modal">Add a source for this input resource type</a>							
+						</div>
+
+						<div class="modal hide fade" id="sourceForm{{ node.node.node_id }}" tabindex="-1" role="dialog" aria-labelledby="source-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="source-label">Add a source for {{ node.node.resource_type }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form>
+									{{ source_form|as_bootstrap }}
+
+								</form>
+						  </div>
+						  <div class="modal-footer">
+							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+							<button class="btn btn-primary">Save changes</button>
+						  </div>
+						</div>
+
+						{% endif %}
+{% endcomment %}
+
+
+						{% if xb_type == "economic-resource-type" %}
+						<div>
+							<a href="#processForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add a process type to create this resource type</a>
+						</div>
+
+
+						<div class="modal hide fade" id="processForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="process-label">Add a process type to create {{ node.xbill_object }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form>
+									{{ process_form|as_bootstrap }}
+
+								</form>
+						  </div>
+						  <div class="modal-footer">
+							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+							<button class="btn btn-primary">Save changes</button>
+						  </div>
+						</div>
+
+						<div>
+							<a href="#sourceForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add a source for this input resource type</a>							
+						</div>
+
+						<div class="modal hide fade" id="sourceForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="source-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="source-label">Add a source for {{ node.xbill_object }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form>
+									{{ source_form|as_bootstrap }}
+
+								</form>
+						  </div>
+						  <div class="modal-footer">
+							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+							<button class="btn btn-primary">Save changes</button>
+						  </div>
+						</div>
+
+						{% endif %}
+
+						{% if xb_type == "process-type" %}
+						<div>
+							<a href="#inputForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add an input to this process type</a>
+						</div>
+
+						<div class="modal hide fade" id="inputForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="input-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="input-label">Add an input to {{ node.xbill_object }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form>
+									{{ input_form|as_bootstrap }}
+
+								</form>
+						  </div>
+						  <div class="modal-footer">
+							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+							<button class="btn btn-primary">Save changes</button>
+						  </div>
+						</div>
+
+						{% endif %}
+
+				{% for close in node.close %}
+					</li>
+					</ul>
+				{% endfor %}
+
+			{% endwith %}
+
+		{% endfor %}
+
+	</div>
+
+    </div>
+
+{% endblock %}
+{% block extra_body %}
+	{{ block.super }}
+    <script type="text/javascript">
+		$('#inputForm').on('hidden', function () {
+  			//alert("inputForm hidden");
+		})
+    </script>
+{% endblock %}

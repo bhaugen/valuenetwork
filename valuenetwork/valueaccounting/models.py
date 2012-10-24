@@ -337,6 +337,9 @@ class AgentResourceType(models.Model):
     def xbill_label(self):
         return self.relationship.infer_label()
 
+    def xbill_explanation(self):
+        return "Source"
+
     def xbill_child_object(self):
         if self.relationship.resource_effect == '+':
             return self.agent
@@ -348,6 +351,10 @@ class AgentResourceType(models.Model):
             return self.resource_type
         else:
             return self.agent
+
+    def node_id(self):
+        return "-".join(["AgentResource", str(self.id)])
+
 
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
@@ -397,6 +404,9 @@ class ProcessType(models.Model):
     def xbill_children(self):
         return self.consumed_resource_type_relationships()
 
+    def xbill_explanation(self):
+        return "Process Type"
+
 
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
@@ -422,6 +432,11 @@ class ProcessTypeResourceType(models.Model):
         else:
            return " ".join([self.relationship.name, str(self.quantity), self.unit_of_quantity.abbrev])
 
+    def xbill_explanation(self):
+        if self.relationship.resource_effect == "+":
+            return "Process Type"
+        else:
+            return "Input"
 
     def xbill_child_object(self):
         if self.relationship.resource_effect == "+":
@@ -434,6 +449,9 @@ class ProcessTypeResourceType(models.Model):
             return self.resource_type
         else:
             return self.process_type
+
+    def node_id(self):
+        return "-".join(["ProcessResource", str(self.id)])
 
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
@@ -563,6 +581,9 @@ class Commitment(models.Model):
         related_name="commitments", verbose_name=_('event type'))
     commitment_date = models.DateField(_('commitment date'))
     due_date = models.DateField(_('due date'))
+    from_agent_type = models.ForeignKey(AgentType,
+        blank=True, null=True,
+        related_name="given_commitments", verbose_name=_('from agent type'))
     from_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="given_commitments", verbose_name=_('from'))

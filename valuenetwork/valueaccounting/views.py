@@ -210,6 +210,22 @@ def extended_bill(request, resource_type_id):
         "big_photo_size": (200, 200),
     }, context_instance=RequestContext(request))
 
+def edit_extended_bill(request, resource_type_id):
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    nodes = generate_xbill(rt)
+    process_form = ProcessTypeForm()
+    source_form = AgentResourceTypeForm()
+    input_form = ProcessTypeResourceTypeForm()
+    return render_to_response("valueaccounting/edit_xbill.html", {
+        "resource_type": rt,
+        "nodes": nodes,
+        "photo_size": (128, 128),
+        "big_photo_size": (200, 200),
+        "process_form": process_form,
+        "source_form": source_form,
+        "input_form": input_form,
+    }, context_instance=RequestContext(request))
+
 def network(request, resource_type_id):
     #import pdb; pdb.set_trace()
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)

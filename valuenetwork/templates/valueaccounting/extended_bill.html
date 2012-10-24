@@ -81,7 +81,7 @@ ul {
 			{% endif %}
 
 			<li  class="xb  {{ node.xbill_class }}" >
-				{{ node.xbill_label }}
+				{{ node.xbill_explanation }}: {{ node.xbill_label }}
 				{% if node.xbill_object.url %}
 					<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
 				{% else %}
