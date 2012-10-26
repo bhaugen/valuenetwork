@@ -213,7 +213,9 @@ def extended_bill(request, resource_type_id):
 def edit_extended_bill(request, resource_type_id):
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
     nodes = generate_xbill(rt)
-    process_form = ProcessTypeForm()
+    resource_type_form = EconomicResourceTypeForm(instance=rt)
+    process_form = XbillProcessTypeForm()
+    change_process_form = ChangeProcessTypeForm()
     source_form = AgentResourceTypeForm()
     input_form = ProcessTypeResourceTypeForm()
     return render_to_response("valueaccounting/edit_xbill.html", {
@@ -221,10 +223,221 @@ def edit_extended_bill(request, resource_type_id):
         "nodes": nodes,
         "photo_size": (128, 128),
         "big_photo_size": (200, 200),
+        "resource_type_form": resource_type_form,
         "process_form": process_form,
+        "change_process_form": change_process_form,
         "source_form": source_form,
         "input_form": input_form,
     }, context_instance=RequestContext(request))
+
+
+def change_resource_type(request, resource_type_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+        form = EconomicResourceTypeForm(request.POST, request.FILES, instance=rt)
+        if form.is_valid():
+            data = form.cleaned_data
+            form.save()
+            return HttpResponseRedirect('/%s/%s/'
+                % ('accounting/edit-xbomfg', resource_type_id))
+
+#todo: need error return here
+
+def create_process_type_input(request):
+    #import pdb; pdb.set_trace()
+    process_type_id = request.POST.get("process_type_id")
+    resource_type_id = request.POST.get("resource_type_id")
+    relationship_id = request.POST.get("relationship_id")
+    unit_id = request.POST.get("unit_id")
+    quantity = request.POST.get("quantity")
+    pt = get_object_or_404(ProcessType, pk=process_type_id)
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    rel = get_object_or_404(ResourceRelationship, pk=relationship_id)
+    unit = get_object_or_404(Unit, pk=unit_id)
+    quantity = Decimal(quantity)
+    ptrt = ProcessTypeResourceType(
+        process_type=pt,
+        resource_type=rt,
+        relationship=rel,
+        unit_of_quantity=unit,
+        quantity=quantity,
+    )
+    ptrt.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
+
+
+def change_process_type_input(request):
+    #import pdb; pdb.set_trace()
+    process_type_resource_type_id = request.POST.get("process_type_resource_type_id")
+    resource_type_id = request.POST.get("resource_type_id")
+    relationship_id = request.POST.get("relationship_id")
+    unit_id = request.POST.get("unit_id")
+    quantity = request.POST.get("quantity")
+    ptrt = get_object_or_404(ProcessTypeResourceType, pk=process_type_resource_type_id)
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    rel = get_object_or_404(ResourceRelationship, pk=relationship_id)
+    unit = get_object_or_404(Unit, pk=unit_id)
+    quantity = Decimal(quantity)
+    save_ptrt = False
+    if ptrt.resource_type.id != rt.id:
+        ptrt.resource_type = rt
+        save_ptrt = True
+    if ptrt.relationship.id != rel.id:
+        ptrt.relationship = rel
+        save_ptrt = True
+    if ptrt.unit_of_quantity.id != unit.id:
+        ptrt.unit_of_quantity = unit
+        save_ptrt = True
+    if ptrt.quantity != quantity:
+        ptrt.quantity = quantity
+        save_ptrt = True
+    if save_ptrt:
+        ptrt.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
+
+def change_agent_resource_type(request):
+    #import pdb; pdb.set_trace()
+    agent_id = request.POST.get("agent_id")
+    agent_resource_type_id = request.POST.get("agent_resource_type_id")
+    relationship_id = request.POST.get("relationship_id")
+    unit_id = request.POST.get("unit_id")
+    value = request.POST.get("value") or 0.0
+    lead_time = request.POST.get("lead_time") or 0
+    lead_time = int(lead_time)
+    agt = get_object_or_404(EconomicAgent, pk=agent_id)
+    art = get_object_or_404(AgentResourceType, pk=agent_resource_type_id)
+    rel = get_object_or_404(ResourceRelationship, pk=relationship_id)
+    unit = get_object_or_404(Unit, pk=unit_id)
+    value = Decimal(value)
+    save_art = False
+    if art.agent.id != agt.id:
+        art.agent=agt
+        save_art = True
+    if art.relationship.id != rel.id:
+        art.relationship=rel
+        save_art = True
+    if art.unit_of_value.id != unit.id:
+        art.unit_of_value=unit
+        save_art = True
+    if art.lead_time != lead_time:
+        art.lead_time=lead_time
+        save_art = True
+    if art.value != value:
+        art.value=value
+        save_art = Tru
+    if save_art:
+        art.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
+
+
+def create_agent_resource_type(request):
+    #import pdb; pdb.set_trace()
+    agent_id = request.POST.get("agent_id")
+    resource_type_id = request.POST.get("resource_type_id")
+    relationship_id = request.POST.get("relationship_id")
+    unit_id = request.POST.get("unit_id")
+    value = request.POST.get("value") or 0.0
+    lead_time = request.POST.get("lead_time") or 0
+    lead_time = int(lead_time)
+    agt = get_object_or_404(EconomicAgent, pk=agent_id)
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    rel = get_object_or_404(ResourceRelationship, pk=relationship_id)
+    unit = get_object_or_404(Unit, pk=unit_id)
+    value = Decimal(value)
+    art = AgentResourceType(
+        agent=agt,
+        resource_type=rt,
+        relationship=rel,
+        lead_time=lead_time,
+        unit_of_value=unit,
+        value=value,
+    )
+    art.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
+
+def change_process_type(request):
+    #import pdb; pdb.set_trace()
+    process_type_id = request.POST.get("process_type_id")
+    parent_id = request.POST.get("parent_id")
+    name = request.POST.get("name")
+    description = request.POST.get("description")
+    url = request.POST.get("url")
+    estimated_duration = request.POST.get("estimated_duration") or 0
+    estimated_duration = int(estimated_duration)
+    pt = get_object_or_404(ProcessType, pk=process_type_id)
+    parent = None
+    if parent_id:
+        parent = get_object_or_404(ProcessType, pk=parent_id)
+    save_pt = False
+    if pt.name != name:
+        pt.name=name
+        save_pt = True
+    if pt.parent:
+        if pt.parent.id != parent_id:
+            pt.parent=parent
+            save_pt = True
+    elif parent:
+        pt.parent=parent
+        save_pt = True
+    if pt.description != description:
+        pt.description=description
+        save_pt = True
+    if pt.url != url:
+        pt.url=url
+        save_pt = True
+    if pt.estimated_duration != estimated_duration:
+        pt.estimated_duration=estimated_duration
+        save_pt = True
+        estimated_duration=estimated_duration,
+    if save_pt:
+        pt.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
+
+def create_process_type_for_resource_type(request):
+    #import pdb; pdb.set_trace()
+    resource_type_id = request.POST.get("resource_type_id")
+    parent_id = request.POST.get("parent_id")
+    name = request.POST.get("name")
+    description = request.POST.get("description")
+    url = request.POST.get("url")
+    estimated_duration = request.POST.get("estimated_duration") or 0
+    estimated_duration = int(estimated_duration)
+    unit_id = request.POST.get("unit_id")
+    quantity = request.POST.get("quantity") or 0.0
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    parent = None
+    if parent_id:
+        parent = get_object_or_404(ProcessType, pk=parent_id)
+    unit = None
+    if unit_id:
+        unit = get_object_or_404(Unit, pk=unit_id)
+    quantity = Decimal(quantity)
+    pt = ProcessType(
+        name=name,
+        parent=parent,
+        description=description,
+        url=url,
+        estimated_duration=estimated_duration,
+    )
+    pt.save()
+    #todo: hack based on rel name, which is user changeable
+    rel = ResourceRelationship.objects.get(name="produces")
+    ptrt = ProcessTypeResourceType(
+        process_type=pt,
+        resource_type=rt,
+        relationship=rel,
+        unit_of_quantity=unit,
+        quantity=quantity,
+    )
+    ptrt.save()
+    data = "ok"
+    return HttpResponse(data, mimetype="text/plain")
 
 def network(request, resource_type_id):
     #import pdb; pdb.set_trace()

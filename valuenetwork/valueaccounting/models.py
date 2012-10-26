@@ -11,6 +11,7 @@ from easy_thumbnails.fields import ThumbnailerImageField
 
 from valuenetwork.valueaccounting.utils import *
 
+
 """Models based on REA
 
 These models are based on the Bill McCarthy's Resource-Event-Agent accounting model:
@@ -319,6 +320,7 @@ class AgentResourceType(models.Model):
     value = models.DecimalField(_('value'), max_digits=8, decimal_places=2, 
         default=Decimal("0.0"))
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
+        limit_choices_to={'unit_type': 'value'},
         verbose_name=_('unit of value'), related_name="agent_resource_value_units")
 
     def __unicode__(self):
@@ -354,6 +356,10 @@ class AgentResourceType(models.Model):
 
     def node_id(self):
         return "-".join(["AgentResource", str(self.id)])
+
+    def xbill_change_form(self):
+        from valuenetwork.valueaccounting.forms import AgentResourceTypeForm
+        return AgentResourceTypeForm(instance=self)
 
 
 class ProcessType(models.Model):
@@ -407,6 +413,10 @@ class ProcessType(models.Model):
     def xbill_explanation(self):
         return "Process Type"
 
+    def xbill_change_form(self):
+        from valuenetwork.valueaccounting.forms import ChangeProcessTypeForm
+        return ChangeProcessTypeForm(instance=self)
+
 
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
@@ -452,6 +462,11 @@ class ProcessTypeResourceType(models.Model):
 
     def node_id(self):
         return "-".join(["ProcessResource", str(self.id)])
+
+    def xbill_change_form(self):
+        from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm
+        return ProcessTypeResourceTypeForm(instance=self)
+
 
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 

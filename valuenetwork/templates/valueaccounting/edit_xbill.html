@@ -48,6 +48,11 @@ ul {
 	font-style: italic;
 	font-weight: normal;
 }
+
+.btn-info {
+	margin-top: 2px;
+
+}
 </style>
 {% endblock %}
 
@@ -68,13 +73,66 @@ ul {
 			{% if resource_type.photo %}
 				<img src="{% thumbnail resource_type.photo big_photo_size %}" />
 			{% endif %}
-			<div style="display: inline;">
-		        <button class="btn btn-primary" type="submit">Change</button>
+
+			<div style="display: inline;" >
+				<a href="#resourceChangeForm" role="button" class="btn btn-primary" data-toggle="modal">Change</a>
+			</div>
+
+
+			<div class="modal hide fade" id="resourceChangeForm" tabindex="-1" role="dialog" aria-labelledby="resource-change-label" aria-hidden="true">
+			  <div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 id="resource-change-label">Change {{ resource_type }}</h3>
+			  </div>
+			  <div class="modal-body">
+					<form class="resource-change-form" enctype="multipart/form-data" action="{% url change_resource_type resource_type_id=resource_type.id %}" method="POST" >
+						{% csrf_token %}
+						{{ resource_type_form|as_bootstrap }}
+{% comment %}
+						<input type="hidden" name="resourceTypeId" value="{{ resource_type.id }}" />
+{% endcomment %}
+					  <div class="modal-footer">
+						<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+						<button class="btn btn-primary">Save changes</button>
+					  </div>
+
+
+					</form>
+			  </div>
+
+			</div>
+
+
 		    </div>
 		</h4>
 		{% if resource_type.description %}
-			<div class="description" >{{ resource_type.description|linebreaks }}</div>
+			<div class="description" >{{ resource_type.description|urlize|linebreaks }}</div>
 		{% endif %}
+
+		<div style="margin-bottom: 2px;" >
+			<a href="#processForm{{ resource_type.id }}" role="button" class="btn btn-info" data-toggle="modal">Add a process type to create {{ resource_type }}</a>
+		</div>
+
+
+		<div class="modal hide fade" id="processForm{{ resource_type.id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3 id="process-label">Add a process type to create {{ resource_type }}</h3>
+		  </div>
+		  <div class="modal-body">
+				<form class="process-form" >
+					{{ process_form|as_bootstrap }}
+					<input type="hidden" name="resourceTypeId" value="{{ resource_type.id }}" />
+				  <div class="modal-footer">
+					<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+					<button class="btn btn-primary">Save changes</button>
+				  </div>
+
+
+				</form>
+		  </div>
+
+		</div>
 
 		{% for node in nodes %}
 			{% if not node.open and not node.close %}
@@ -85,127 +143,191 @@ ul {
     				<ul class="xb" >
 			{% endif %}
 
-			{% with xb_type=node.xbill_class %}
+			{% with xb_type=node.xbill_class xbill_object=node.xbill_object xbill_node=node.node %}
 
 				<li  class="xb  {{ xb_type }}" >
+
 {% comment %}
-					<p>xbill node: {{ node.node }} Id: {{ node.node.node_id }} </p>
-					<p>xbill_object: {{ node.xbill_object }} Id: {{ node.xbill_object.node_id }}</p>
+					<p>xbill node: {{ xbill_node }} Id: {{ xbill_node.node_id }} xb_type: {{ xb_type }}</p>
+					<p>xbill_object: {{ xbill_object }} Id: {{ xbill_object.node_id }}</p>
 {% endcomment %}
 
 					{{ node.xbill_explanation }}: {{ node.xbill_label }}
 
-					{% if node.xbill_object.url %}
-						<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
+					{% if xbill_object.url %}
+						<a href="{{ xbill_object.url }}" target="blank">{{ xbill_object }}</a>
 					{% else %}
-						 {{ node.xbill_object }}
+						 {{ xbill_object }}
 					{% endif %}
 
-					{% if node.xbill_object.photo %}
-						<img src="{% thumbnail node.xbill_object.photo photo_size %}" />
+					{% if xbill_object.photo %}
+						<img src="{% thumbnail xbill_object.photo photo_size %}" />
 					{% endif %}
 
-					<div style="display: inline;">
-				    	<button class="btn btn-primary" type="submit">Change</button>
-					</div>
-
-					{% if node.xbill_object.description %}
-						<div class="description" >{{ node.xbill_object.description|linebreaks }}</div>
-					{% endif %}
-
-{% comment %}
-						{% if xb_type == "economic-agent" %}
-						<div>
-							<a href="#sourceForm{{ node.node.node_id }}" role="button" class="btn" data-toggle="modal">Add a source for this input resource type</a>							
+					{% if xb_type == "process-type" %}
+						<div style="display: inline;" >
+							<a href="#processChangeForm{{ xbill_object.node_id }}" role="button" class="btn btn-primary" data-toggle="modal">Change</a>
 						</div>
 
-						<div class="modal hide fade" id="sourceForm{{ node.node.node_id }}" tabindex="-1" role="dialog" aria-labelledby="source-label" aria-hidden="true">
+
+						<div class="modal hide fade" id="processChangeForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-change-label" aria-hidden="true">
 						  <div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-							<h3 id="source-label">Add a source for {{ node.node.resource_type }}</h3>
+							<h3 id="process-change-label">Change {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form>
-									{{ source_form|as_bootstrap }}
+								<form class="process-change-form" >
+									{{ xbill_object.xbill_change_form|as_bootstrap }}
+									<input type="hidden" name="processTypeId" value="{{ xbill_object.id }}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
+
 
 								</form>
 						  </div>
-						  <div class="modal-footer">
-							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-							<button class="btn btn-primary">Save changes</button>
-						  </div>
+
 						</div>
 
-						{% endif %}
-{% endcomment %}
+
+					{% endif %}
+
+					{% if xb_type == "economic-resource-type" %}
+						<div style="display: inline;">
+							<a href="#changeInputForm{{ xbill_node.node_id }}" role="button" class="btn btn-primary" data-toggle="modal">Change</a>
+						</div>
+
+
+						<div class="modal hide fade" id="changeInputForm{{ xbill_node.node_id }}" tabindex="-1" role="dialog" aria-labelledby="change-input-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="change-input-label">Change {{ xbill_node }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form class="change-input-form" >
+									{{ xbill_node.xbill_change_form|as_bootstrap }}
+									<input type="hidden" name="processTypeResourceTypeId" value="{{ xbill_node.id }}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
+
+
+								</form>
+						  </div>
+
+						</div>
+
+					{% endif %}
+
+
+					{% if xb_type == "economic-agent" %}
+
+						<div style="display: inline;" >
+							<a href="#changeSourceForm{{ xbill_node.node_id }}" role="button" class="btn btn-primary" data-toggle="modal">Change</a>							
+						</div>
+
+						<div class="modal hide fade" id="changeSourceForm{{ xbill_node.node_id }}" tabindex="-1" role="dialog" aria-labelledby="change-source-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="change-source-label">Change {{ xbill_node }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form class="change-source-form" >
+									{{ xbill_node.xbill_change_form|as_bootstrap }}
+									<input type="hidden" name="agentResourceTypeId" value="{{ xbill_node.id }}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
+
+								</form>
+						  </div>
+
+						</div>
+
+					{% endif %}
+
+					{% if xbill_object.description %}
+						<div class="description" >{{ xbill_object.description|urlize|linebreaks }}</div>
+					{% endif %}
 
 
 						{% if xb_type == "economic-resource-type" %}
 						<div>
-							<a href="#processForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add a process type to create this resource type</a>
+							<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a process type to create {{ xbill_object }}</a>
 						</div>
 
 
-						<div class="modal hide fade" id="processForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
+						<div class="modal hide fade" id="processForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
 						  <div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-							<h3 id="process-label">Add a process type to create {{ node.xbill_object }}</h3>
+							<h3 id="process-label">Add a process type to create {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form>
+								<form class="process-form" >
 									{{ process_form|as_bootstrap }}
+									<input type="hidden" name="resourceTypeId" value="{{ xbill_object.id }}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
+
 
 								</form>
 						  </div>
-						  <div class="modal-footer">
-							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-							<button class="btn btn-primary">Save changes</button>
-						  </div>
+
 						</div>
 
 						<div>
-							<a href="#sourceForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add a source for this input resource type</a>							
+							<a href="#sourceForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a source for {{ xbill_object }}</a>							
 						</div>
 
-						<div class="modal hide fade" id="sourceForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="source-label" aria-hidden="true">
+						<div class="modal hide fade" id="sourceForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="source-label" aria-hidden="true">
 						  <div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-							<h3 id="source-label">Add a source for {{ node.xbill_object }}</h3>
+							<h3 id="source-label">Add a source for {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form>
+								<form class="source-form" >
 									{{ source_form|as_bootstrap }}
+									<input type="hidden" name="resourceTypeId" value="{{ xbill_object.id }}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
 
 								</form>
 						  </div>
-						  <div class="modal-footer">
-							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-							<button class="btn btn-primary">Save changes</button>
-						  </div>
+
 						</div>
 
 						{% endif %}
 
 						{% if xb_type == "process-type" %}
 						<div>
-							<a href="#inputForm{{ node.xbill_object.node_id }}" role="button" class="btn" data-toggle="modal">Add an input to this process type</a>
+							<a href="#inputForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add an input to {{ xbill_object }}</a>
 						</div>
 
-						<div class="modal hide fade" id="inputForm{{ node.xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="input-label" aria-hidden="true">
+						<div class="modal hide fade" id="inputForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="input-label" aria-hidden="true">
 						  <div class="modal-header">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-							<h3 id="input-label">Add an input to {{ node.xbill_object }}</h3>
+							<h3 id="input-label">Add an input to {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form>
+								<form class="input-form" >
 									{{ input_form|as_bootstrap }}
+									<input type="hidden" name="processTypeId" value="{{ xbill_object.id }}" />
+
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
 
 								</form>
 						  </div>
-						  <div class="modal-footer">
-							<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-							<button class="btn btn-primary">Save changes</button>
-						  </div>
+
 						</div>
 
 						{% endif %}
@@ -227,8 +349,243 @@ ul {
 {% block extra_body %}
 	{{ block.super }}
     <script type="text/javascript">
-		$('#inputForm').on('hidden', function () {
-  			//alert("inputForm hidden");
-		})
+/*
+		$('.resource-change-form').on('submit', function(){
+			this.submit();
+		});
+*/
+		$('.change-source-form').on('submit', function(){
+
+			var agentId = this['agent'].value;
+			var agentResourceTypeId = this['agentResourceTypeId'].value;
+			var relationshipId = this['relationship'].value;
+			var value = this['value'].value;
+			var leadTime = this['lead_time'].value;
+			var unitId = this['unit_of_value'].value;
+			if (agentId && agentResourceTypeId && relationshipId && unitId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url change_agent_resource_type %}",  { 
+					agent_id: agentId, 
+					agent_resource_type_id: agentResourceTypeId,
+					relationship_id: relationshipId, 
+					unit_id: unitId,
+                    lead_time: leadTime,
+					value: value },
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+		$('.process-change-form').on('submit', function(){
+			var processTypeId = this['processTypeId'].value;
+			var name = this['name'].value;
+			var parentId = this['parent'].value;
+			var url = this['url'].value;
+			var description = this['description'].value;
+			var dur = this['estimated_duration'].value;
+			if (name && processTypeId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url change_process_type %}",  { 
+					name: name, 
+					process_type_id: processTypeId,
+					parent_id: parentId, 
+					url: url,
+					estimated_duration: dur,
+					description: description },
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+		$('.change-input-form').on('submit', function(){
+
+			var processTypeResourceTypeId = this['processTypeResourceTypeId'].value;
+			var resourceTypeId = this['resource_type'].value;
+			var relationshipId = this['relationship'].value;
+			var quantity = this['quantity'].value;
+			var unitId = this['unit_of_quantity'].value;
+			//did not work: var s = this.serialize();
+			if (processTypeResourceTypeId && resourceTypeId && relationshipId && unitId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url change_process_type_input %}",  { 
+					process_type_resource_type_id: processTypeResourceTypeId, 
+					resource_type_id: resourceTypeId,
+					relationship_id: relationshipId, 
+					unit_id: unitId,
+					quantity: quantity },
+					//todo: if this is done ajaxy, must clear form
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+		$('.input-form').on('submit', function(){
+
+			// save here
+			var processTypeId = this['processTypeId'].value;
+			var resourceTypeId = this['resource_type'].value;
+			var relationshipId = this['relationship'].value;
+			var quantity = this['quantity'].value;
+			var unitId = this['unit_of_quantity'].value;
+			//did not work: var s = this.serialize();
+			if (processTypeId && resourceTypeId && relationshipId && unitId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url create_process_type_input %}",  { 
+					process_type_id: processTypeId, 
+					resource_type_id: resourceTypeId,
+					relationship_id: relationshipId, 
+					unit_id: unitId,
+					quantity: quantity },
+					//todo: if this is done ajaxy, must clear form
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+		$('.process-form').on('submit', function(){
+			var resourceTypeId = this['resourceTypeId'].value;
+			var name = this['name'].value;
+			var parentId = this['parent'].value;
+			var url = this['url'].value;
+			var description = this['description'].value;
+			var dur = this['estimated_duration'].value;
+			var quantity = this['quantity'].value;
+			var unitId = this['unit'].value;
+			if (name && resourceTypeId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url create_process_type_for_resource_type %}",  { 
+					name: name, 
+					resource_type_id: resourceTypeId,
+					parent_id: parentId, 
+					url: url,
+					estimated_duration: dur,
+					quantity: quantity,
+					unit_id: unitId,
+					description: description },
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+		$('.source-form').on('submit', function(){
+
+			var agentId = this['agent'].value;
+			var resourceTypeId = this['resourceTypeId'].value;
+			var relationshipId = this['relationship'].value;
+			var value = this['value'].value;
+			var leadTime = this['lead_time'].value;
+			var unitId = this['unit_of_value'].value;
+			if (agentId && resourceTypeId && relationshipId && unitId)
+			{
+				$("*").css("cursor", "progress");
+				$.post("{% url create_agent_resource_type %}",  { 
+					agent_id: agentId, 
+					resource_type_id: resourceTypeId,
+					relationship_id: relationshipId, 
+					unit_id: unitId,
+                    lead_time: leadTime,
+					value: value },
+					function() {
+						$("*").css("cursor", "auto");
+		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+	   				});
+			}
+			else
+			{
+				$(".modal").modal('hide');
+			}
+
+			// Stop the normal form submission
+			return false;
+		});
+
+
+		$(document).ajaxSend(function(event, xhr, settings) {
+			function getCookie(name) {
+				var cookieValue = null;
+				if (document.cookie && document.cookie != '') {
+				    var cookies = document.cookie.split(';');
+				    for (var i = 0; i < cookies.length; i++) {
+				        var cookie = jQuery.trim(cookies[i]);
+				        // Does this cookie string begin with the name we want?
+				        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+				            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+				            break;
+				        }
+				    }
+				}
+				return cookieValue;
+			}
+			function sameOrigin(url) {
+				// url could be relative or scheme relative or absolute
+				var host = document.location.host; // host + port
+				var protocol = document.location.protocol;
+				var sr_origin = '//' + host;
+				var origin = protocol + sr_origin;
+				// Allow absolute or scheme relative URLs to same origin
+				return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+				    (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+				    // or any other URL that isn't scheme relative or absolute i.e relative.
+				    !(/^(\/\/|http:|https:).*/.test(url));
+			}
+			function safeMethod(method) {
+				return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+			}
+
+			if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+				xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+			}
+		});
+
     </script>
 {% endblock %}
