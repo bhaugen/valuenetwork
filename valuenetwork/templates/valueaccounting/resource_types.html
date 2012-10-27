@@ -1,0 +1,93 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load bootstrap_tags %}
+
+{% block head_title %}{% trans "Resource Types" %}{% endblock %}
+
+{% block extra_head %}
+
+<style>
+
+.name {
+	font-size: 1.4em;
+	font-weight: bold;
+}
+
+li {
+	padding: 4px;
+}
+
+</style>
+{% endblock %}
+
+{% block body_class %}resource-types{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<h1>
+			{% trans "Resource Types" %}
+
+			{% if user.is_authenticated %}
+				<div style="display: inline;" >
+					<a href="#createResourceForm" role="button" class="btn btn-primary" data-toggle="modal">Create new Resource Type</a>
+				</div>
+
+
+				<div class="modal hide fade" id="createResourceForm" tabindex="-1" role="dialog" aria-labelledby="resource_create-label" aria-hidden="true">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+						<h3 id="resource_create-label">Create a new Resource Type</h3>
+					</div>
+					<div class="modal-body">
+						<form class="resource_create-form" enctype="multipart/form-data" action="{% url create_resource_type %}" method="POST" >
+							{% csrf_token %}
+							{{ create_form|as_bootstrap }}
+							<input type="hidden" name="next" value="{% url resource_types %}" />
+						  <div class="modal-footer">
+							<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+							<button class="btn btn-primary">Save changes</button>
+						  </div>
+
+
+						</form>
+				  </div>
+			{% endif %}
+
+		</h1>
+		<ul>
+			{% for root in roots %}
+				<li>
+					<span class="name">{{ root }}</span> 
+					{% with resource_type=root %}
+						{% include  "valueaccounting/_resource_type.html" %}
+					{% endwith %}
+				</li>
+				{% if root.sub_projects.all %}
+					<ul>
+						{% for kid in root.children %}
+							<li>
+								<span class="name">{{ kid }}</span> 
+								
+							</li>
+							{% if kid.children %}
+								<ul>
+									{% for grandkid in kid.children %}
+										<li>
+											<span class="name">{{ grandkid }}</span> 
+											
+										</li>
+									{% endfor %}
+								</ul>
+							{% endif %}
+						{% endfor %}
+					</ul>
+				{% endif %}
+			{% endfor %}
+		</ul>
+
+	</div>
+    </div>
+{% endblock %}

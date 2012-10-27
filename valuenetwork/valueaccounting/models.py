@@ -184,6 +184,9 @@ class EconomicResourceType(models.Model):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
 
+    def children(self):
+        return self.children.all()
+
     def node_id(self):
         return "-".join(["ResourceType", str(self.id)])
 
@@ -243,6 +246,11 @@ class EconomicResourceType(models.Model):
 
     def xbill_parent_object(self):
         return self
+
+    def change_form(self):
+        from valuenetwork.valueaccounting.forms import EconomicResourceTypeForm
+        return EconomicResourceTypeForm(instance=self)
+
 
 class EconomicResource(models.Model):
     resource_type = models.ForeignKey(EconomicResourceType, 
@@ -440,7 +448,10 @@ class ProcessTypeResourceType(models.Model):
         if self.relationship.resource_effect == "+":
             return self.inverse_label()
         else:
-           return " ".join([self.relationship.name, str(self.quantity), self.unit_of_quantity.abbrev])
+           abbrev = ""
+           if self.unit_of_quantity:
+               abbrev = self.unit_of_quantity.abbrev
+           return " ".join([self.relationship.name, str(self.quantity), abbrev])
 
     def xbill_explanation(self):
         if self.relationship.resource_effect == "+":

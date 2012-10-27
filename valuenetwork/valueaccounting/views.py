@@ -33,6 +33,15 @@ def projects(request):
         "roots": roots,
     }, context_instance=RequestContext(request))
 
+def resource_types(request):
+    roots = EconomicResourceType.objects.filter(parent=None)
+    create_form = EconomicResourceTypeForm()
+    return render_to_response("valueaccounting/resource_types.html", {
+        "roots": roots,
+        "create_form": create_form,
+        "photo_size": (128, 128),
+    }, context_instance=RequestContext(request))
+
 def contributions(request, project_id):
     #import pdb; pdb.set_trace()
     project = get_object_or_404(Project, pk=project_id)
@@ -210,6 +219,7 @@ def extended_bill(request, resource_type_id):
         "big_photo_size": (200, 200),
     }, context_instance=RequestContext(request))
 
+@login_required
 def edit_extended_bill(request, resource_type_id):
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
     nodes = generate_xbill(rt)
@@ -230,7 +240,7 @@ def edit_extended_bill(request, resource_type_id):
         "input_form": input_form,
     }, context_instance=RequestContext(request))
 
-
+@login_required
 def change_resource_type(request, resource_type_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
@@ -239,11 +249,32 @@ def change_resource_type(request, resource_type_id):
         if form.is_valid():
             data = form.cleaned_data
             form.save()
-            return HttpResponseRedirect('/%s/%s/'
-                % ('accounting/edit-xbomfg', resource_type_id))
+            next = request.POST.get("next")
+            if next:
+                return HttpResponseRedirect(next)
+            else:
+                return HttpResponseRedirect('/%s/%s/'
+                    % ('accounting/edit-xbomfg', resource_type_id))
 
 #todo: need error return here
 
+
+@login_required
+def create_resource_type(request):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        form = EconomicResourceTypeForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data
+            form.save()
+            next = request.POST.get("next")
+            if next:
+                return HttpResponseRedirect(next)
+            else:
+                return HttpResponseRedirect('/%s/'
+                    % ('accounting/resources'))
+
+@login_required
 def create_process_type_input(request):
     #import pdb; pdb.set_trace()
     process_type_id = request.POST.get("process_type_id")
@@ -267,7 +298,7 @@ def create_process_type_input(request):
     data = "ok"
     return HttpResponse(data, mimetype="text/plain")
 
-
+@login_required
 def change_process_type_input(request):
     #import pdb; pdb.set_trace()
     process_type_resource_type_id = request.POST.get("process_type_resource_type_id")
@@ -298,6 +329,7 @@ def change_process_type_input(request):
     data = "ok"
     return HttpResponse(data, mimetype="text/plain")
 
+@login_required
 def change_agent_resource_type(request):
     #import pdb; pdb.set_trace()
     agent_id = request.POST.get("agent_id")
@@ -333,7 +365,7 @@ def change_agent_resource_type(request):
     data = "ok"
     return HttpResponse(data, mimetype="text/plain")
 
-
+@login_required
 def create_agent_resource_type(request):
     #import pdb; pdb.set_trace()
     agent_id = request.POST.get("agent_id")
@@ -360,6 +392,7 @@ def create_agent_resource_type(request):
     data = "ok"
     return HttpResponse(data, mimetype="text/plain")
 
+@login_required
 def change_process_type(request):
     #import pdb; pdb.set_trace()
     process_type_id = request.POST.get("process_type_id")
@@ -399,6 +432,7 @@ def change_process_type(request):
     data = "ok"
     return HttpResponse(data, mimetype="text/plain")
 
+@login_required
 def create_process_type_for_resource_type(request):
     #import pdb; pdb.set_trace()
     resource_type_id = request.POST.get("resource_type_id")

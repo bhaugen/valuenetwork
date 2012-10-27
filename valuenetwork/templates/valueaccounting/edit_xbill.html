@@ -80,17 +80,14 @@ ul {
 
 
 			<div class="modal hide fade" id="resourceChangeForm" tabindex="-1" role="dialog" aria-labelledby="resource-change-label" aria-hidden="true">
-			  <div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-				<h3 id="resource-change-label">Change {{ resource_type }}</h3>
-			  </div>
-			  <div class="modal-body">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h3 id="resource-change-label">Change {{ resource_type }}</h3>
+				</div>
+				<div class="modal-body">
 					<form class="resource-change-form" enctype="multipart/form-data" action="{% url change_resource_type resource_type_id=resource_type.id %}" method="POST" >
 						{% csrf_token %}
 						{{ resource_type_form|as_bootstrap }}
-{% comment %}
-						<input type="hidden" name="resourceTypeId" value="{{ resource_type.id }}" />
-{% endcomment %}
 					  <div class="modal-footer">
 						<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 						<button class="btn btn-primary">Save changes</button>
@@ -102,15 +99,19 @@ ul {
 
 			</div>
 
-
-		    </div>
 		</h4>
 		{% if resource_type.description %}
 			<div class="description" >{{ resource_type.description|urlize|linebreaks }}</div>
 		{% endif %}
 
 		<div style="margin-bottom: 2px;" >
-			<a href="#processForm{{ resource_type.id }}" role="button" class="btn btn-info" data-toggle="modal">Add a process type to create {{ resource_type }}</a>
+			<a href="#processForm{{ resource_type.id }}" role="button" class="btn btn-info" data-toggle="modal">
+				{% if resource_type.producing_process_type_relationships %}
+					Add another process type to create {{ resource_type }}
+				{% else %}
+					Add a process type to create {{ resource_type }}
+				{% endif %}
+			</a>
 		</div>
 
 

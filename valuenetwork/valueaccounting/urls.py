@@ -3,6 +3,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns("",
     url(r"^projects/$", 'valuenetwork.valueaccounting.views.projects', name="projects"),
+    url(r"^resources/$", 'valuenetwork.valueaccounting.views.resource_types', name="resource_types"),
     url(r"^contributions/(?P<project_id>\d+)/$", 'valuenetwork.valueaccounting.views.contributions', name="contributions"),
     url(r"^contributionhistory/(?P<agent_id>\d+)/$", 'valuenetwork.valueaccounting.views.contribution_history', name="contribution_history"),
     url(r"^logtime/$", 'valuenetwork.valueaccounting.views.log_time', name="log_time"),
@@ -26,4 +27,6 @@ urlpatterns = patterns("",
         name="change_process_type"),
     url(r"^change-resource-type/(?P<resource_type_id>\d+)/$", 'valuenetwork.valueaccounting.views.change_resource_type', 
         name="change_resource_type"),
+    url(r"^create-resource-type/$", 'valuenetwork.valueaccounting.views.create_resource_type', 
+        name="create_resource_type"),
 )
