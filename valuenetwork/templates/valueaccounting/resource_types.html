@@ -36,13 +36,13 @@ li {
 				</div>
 
 
-				<div class="modal hide fade" id="createResourceForm" tabindex="-1" role="dialog" aria-labelledby="resource_create-label" aria-hidden="true">
+				<div class="modal hide fade" id="createResourceForm" tabindex="-1" role="dialog" aria-labelledby="resource-create-label" aria-hidden="true">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-						<h3 id="resource_create-label">Create a new Resource Type</h3>
+						<h3 id="resource-create-label">Create a new Resource Type</h3>
 					</div>
 					<div class="modal-body">
-						<form class="resource_create-form" enctype="multipart/form-data" action="{% url create_resource_type %}" method="POST" >
+						<form class="form-inline resource-create-form" enctype="multipart/form-data" action="{% url create_resource_type %}" method="POST" >
 							{% csrf_token %}
 							{{ create_form|as_bootstrap }}
 							<input type="hidden" name="next" value="{% url resource_types %}" />
@@ -90,4 +90,37 @@ li {
 
 	</div>
     </div>
+{% endblock %}
+{% block extra_script %}
+	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.10.0/jquery.validate.min.js"></script>
+{% endblock %}
+{% block extra_body %}
+	{{ block.super }}
+    <script type="text/javascript">
+
+	$(document).ready(function(){
+	 
+		$('.resource-create-form').validate(
+		{
+			rules: {
+				name: {
+					minlength: 2,
+					required: true
+				}
+			},
+			highlight: function(label) {
+				$(label).closest('.control-group').addClass('error');
+			},
+			success: function(label) {
+				label
+					.text('OK!').addClass('valid')
+					.closest('.control-group').addClass('success');
+			},
+			submitHandler: function(form) {
+				form.submit();
+			}
+		});
+	}); // end document.ready
+
+    </script>
 {% endblock %}
