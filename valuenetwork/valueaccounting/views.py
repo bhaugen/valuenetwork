@@ -34,7 +34,7 @@ def projects(request):
     }, context_instance=RequestContext(request))
 
 def resource_types(request):
-    roots = EconomicResourceType.objects.filter(parent=None)
+    roots = EconomicResourceType.objects.all()
     create_form = EconomicResourceTypeForm()
     return render_to_response("valueaccounting/resource_types.html", {
         "roots": roots,
@@ -330,8 +330,8 @@ def change_process_type_input(request):
     return HttpResponse(data, mimetype="text/plain")
 
 @login_required
-def change_agent_resource_type(request):
-    #import pdb; pdb.set_trace()
+def change_agent_resource_type_x(request):
+    import pdb; pdb.set_trace()
     agent_id = request.POST.get("agent_id")
     agent_resource_type_id = request.POST.get("agent_resource_type_id")
     relationship_id = request.POST.get("relationship_id")
@@ -366,6 +366,24 @@ def change_agent_resource_type(request):
     return HttpResponse(data, mimetype="text/plain")
 
 @login_required
+def change_agent_resource_type(request):
+    #import pdb; pdb.set_trace()
+    data = "server error"
+    if request.method == "POST":
+        agent_resource_type_id = request.POST.get("agentResourceTypeId")
+        art = get_object_or_404(AgentResourceType, pk=agent_resource_type_id)
+        form = AgentResourceTypeForm(data=request.POST, instance=art)
+        if form.is_valid():
+            data = form.cleaned_data
+            form.save()
+            data = "ok"
+        else:
+            errs = form.errors
+            l = [": ".join([err, errs[err][0]]) for err in errs]
+            data = ",".join(l)
+    return HttpResponse(data, mimetype="text/plain")
+
+@login_required
 def create_agent_resource_type(request):
     #import pdb; pdb.set_trace()
     agent_id = request.POST.get("agent_id")
@@ -396,27 +414,27 @@ def create_agent_resource_type(request):
 def change_process_type(request):
     #import pdb; pdb.set_trace()
     process_type_id = request.POST.get("process_type_id")
-    parent_id = request.POST.get("parent_id")
+    #parent_id = request.POST.get("parent_id")
     name = request.POST.get("name")
     description = request.POST.get("description")
     url = request.POST.get("url")
     estimated_duration = request.POST.get("estimated_duration") or 0
     estimated_duration = int(estimated_duration)
     pt = get_object_or_404(ProcessType, pk=process_type_id)
-    parent = None
-    if parent_id:
-        parent = get_object_or_404(ProcessType, pk=parent_id)
+    #parent = None
+    #if parent_id:
+    #    parent = get_object_or_404(ProcessType, pk=parent_id)
     save_pt = False
     if pt.name != name:
         pt.name=name
         save_pt = True
-    if pt.parent:
-        if pt.parent.id != parent_id:
-            pt.parent=parent
-            save_pt = True
-    elif parent:
-        pt.parent=parent
-        save_pt = True
+    #if pt.parent:
+    #    if pt.parent.id != parent_id:
+    #        pt.parent=parent
+    #        save_pt = True
+    #elif parent:
+    #    pt.parent=parent
+    #    save_pt = True
     if pt.description != description:
         pt.description=description
         save_pt = True
@@ -436,7 +454,7 @@ def change_process_type(request):
 def create_process_type_for_resource_type(request):
     #import pdb; pdb.set_trace()
     resource_type_id = request.POST.get("resource_type_id")
-    parent_id = request.POST.get("parent_id")
+    #parent_id = request.POST.get("parent_id")
     name = request.POST.get("name")
     description = request.POST.get("description")
     url = request.POST.get("url")
@@ -445,16 +463,16 @@ def create_process_type_for_resource_type(request):
     unit_id = request.POST.get("unit_id")
     quantity = request.POST.get("quantity") or 0.0
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
-    parent = None
-    if parent_id:
-        parent = get_object_or_404(ProcessType, pk=parent_id)
+    #parent = None
+    #if parent_id:
+    #    parent = get_object_or_404(ProcessType, pk=parent_id)
     unit = None
     if unit_id:
         unit = get_object_or_404(Unit, pk=unit_id)
     quantity = Decimal(quantity)
     pt = ProcessType(
         name=name,
-        parent=parent,
+        #parent=parent,
         description=description,
         url=url,
         estimated_duration=estimated_duration,

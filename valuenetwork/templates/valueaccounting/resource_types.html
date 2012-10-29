@@ -104,9 +104,11 @@ li {
 		{
 			rules: {
 				name: {
-					minlength: 2,
 					required: true
-				}
+				},
+				url: {
+					url: true
+				},
 			},
 			highlight: function(label) {
 				$(label).closest('.control-group').addClass('error');

@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load thumbnail %}
 
-{% block head_title %}{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}{% endblock %}
+{% block head_title %}{% trans "Recipe for " %} {{ resource_type }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -55,7 +55,7 @@ ul {
     <div class="container">
         {% include "_messages.html" %}
 	<div>
-		<h1>{% trans "Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}</h1>
+		<h1>{% trans "Recipe for " %} {{ resource_type }}</h1>
 
         <h4>
 			{% if resource_type.url %}

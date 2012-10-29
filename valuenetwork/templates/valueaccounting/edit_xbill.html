@@ -4,7 +4,7 @@
 {% load thumbnail %}
 {% load bootstrap_tags %}
 
-{% block head_title %}{% trans " Edit Extended Bill of Manufacturing and Procurement for " %} {{ resource_type }}{% endblock %}
+{% block head_title %}{% trans " Edit Recipe for " %} {{ resource_type }}{% endblock %}
 
 {% block extra_head %}
 
@@ -62,7 +62,7 @@ ul {
     <div class="container">
         {% include "_messages.html" %}
 	<div>
-		<h1>{% trans "Edit Extended Bill for " %} {{ resource_type }}</h1>
+		<h1>{% trans "Edit Recipe for " %} {{ resource_type }}</h1>
 
         <h4>
 			{% if resource_type.url %}
@@ -350,13 +350,15 @@ ul {
 {% block extra_body %}
 	{{ block.super }}
     <script type="text/javascript">
+
+	$(document).ready(function(){
 /*
 		$('.resource-change-form').on('submit', function(){
 			this.submit();
 		});
 */
 		$('.change-source-form').on('submit', function(){
-
+			var s = $(this).serialize();
 			var agentId = this['agent'].value;
 			var agentResourceTypeId = this['agentResourceTypeId'].value;
 			var relationshipId = this['relationship'].value;
@@ -366,16 +368,18 @@ ul {
 			if (agentId && agentResourceTypeId && relationshipId && unitId)
 			{
 				$("*").css("cursor", "progress");
-				$.post("{% url change_agent_resource_type %}",  { 
-					agent_id: agentId, 
-					agent_resource_type_id: agentResourceTypeId,
-					relationship_id: relationshipId, 
-					unit_id: unitId,
-                    lead_time: leadTime,
-					value: value },
-					function() {
+				$.post("{% url change_agent_resource_type %}", 
+					s,
+					function(data) {
 						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+						if (data == "ok")
+						{
+		 					window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
+						}
+						else
+						{
+							alert(data);
+						}
 	   				});
 			}
 			else
@@ -390,7 +394,6 @@ ul {
 		$('.process-change-form').on('submit', function(){
 			var processTypeId = this['processTypeId'].value;
 			var name = this['name'].value;
-			var parentId = this['parent'].value;
 			var url = this['url'].value;
 			var description = this['description'].value;
 			var dur = this['estimated_duration'].value;
@@ -400,7 +403,6 @@ ul {
 				$.post("{% url change_process_type %}",  { 
 					name: name, 
 					process_type_id: processTypeId,
-					parent_id: parentId, 
 					url: url,
 					estimated_duration: dur,
 					description: description },
@@ -486,7 +488,6 @@ ul {
 		$('.process-form').on('submit', function(){
 			var resourceTypeId = this['resourceTypeId'].value;
 			var name = this['name'].value;
-			var parentId = this['parent'].value;
 			var url = this['url'].value;
 			var description = this['description'].value;
 			var dur = this['estimated_duration'].value;
@@ -498,7 +499,6 @@ ul {
 				$.post("{% url create_process_type_for_resource_type %}",  { 
 					name: name, 
 					resource_type_id: resourceTypeId,
-					parent_id: parentId, 
 					url: url,
 					estimated_duration: dur,
 					quantity: quantity,
@@ -588,5 +588,6 @@ ul {
 			}
 		});
 
+	}); // end document.ready
     </script>
 {% endblock %}

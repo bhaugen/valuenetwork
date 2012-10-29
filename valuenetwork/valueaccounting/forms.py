@@ -10,6 +10,7 @@ class EconomicResourceTypeForm(forms.ModelForm):
     
     class Meta:
         model = EconomicResourceType
+        exclude = ('parent',)
 
 
 class AgentResourceTypeForm(forms.ModelForm):
@@ -36,12 +37,14 @@ class XbillProcessTypeForm(forms.ModelForm):
 
     class Meta:
         model = ProcessType
+        exclude = ('parent',)
 
 
 class ChangeProcessTypeForm(forms.ModelForm):
 
     class Meta:
         model = ProcessType
+        exclude = ('parent',)
 
 
 class ProcessTypeResourceTypeForm(forms.ModelForm):
