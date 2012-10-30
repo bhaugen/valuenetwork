@@ -88,6 +88,7 @@ ul {
 					<form class="resource-change-form" enctype="multipart/form-data" action="{% url change_resource_type resource_type_id=resource_type.id %}" method="POST" >
 						{% csrf_token %}
 						{{ resource_type_form|as_bootstrap }}
+						<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 					  <div class="modal-footer">
 						<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 						<button class="btn btn-primary">Save changes</button>
@@ -121,9 +122,10 @@ ul {
 			<h3 id="process-label">Add a process type to create {{ resource_type }}</h3>
 		  </div>
 		  <div class="modal-body">
-				<form class="process-form" >
+				<form class="process-form" action="{% url create_process_type_for_resource_type resource_type_id=resource_type.id %}" method="POST">
+						{% csrf_token %}
 					{{ process_form|as_bootstrap }}
-					<input type="hidden" name="resourceTypeId" value="{{ resource_type.id }}" />
+					<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 				  <div class="modal-footer">
 					<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 					<button class="btn btn-primary">Save changes</button>
@@ -177,9 +179,10 @@ ul {
 							<h3 id="process-change-label">Change {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="process-change-form" >
+								<form class="process-change-form" action="{% url change_process_type process_type_id=xbill_object.id %}" method="POST" >
+									{% csrf_token %}
 									{{ xbill_object.xbill_change_form|as_bootstrap }}
-									<input type="hidden" name="processTypeId" value="{{ xbill_object.id }}" />
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -206,9 +209,10 @@ ul {
 							<h3 id="change-input-label">Change {{ xbill_node }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="change-input-form" >
+								<form class="change-input-form" action="{% url change_process_type_input input_id=xbill_node.id %}" method="POST" >
+									{% csrf_token %}
 									{{ xbill_node.xbill_change_form|as_bootstrap }}
-									<input type="hidden" name="processTypeResourceTypeId" value="{{ xbill_node.id }}" />
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -235,9 +239,10 @@ ul {
 							<h3 id="change-source-label">Change {{ xbill_node }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="change-source-form" >
+								<form class="change-source-form" action="{% url change_agent_resource_type agent_resource_type_id=xbill_node.id %}" method="POST" >
+									{% csrf_token %}
 									{{ xbill_node.xbill_change_form|as_bootstrap }}
-									<input type="hidden" name="agentResourceTypeId" value="{{ xbill_node.id }}" />
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -257,7 +262,13 @@ ul {
 
 						{% if xb_type == "economic-resource-type" %}
 						<div>
-							<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a process type to create {{ xbill_object }}</a>
+							<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">
+								{% if xbill_object.producing_process_type_relationships %}
+									Add another process type to create {{ xbill_object }}
+								{% else %}
+									Add a process type to create {{ xbill_object }}
+								{% endif %}
+							</a>
 						</div>
 
 
@@ -267,9 +278,10 @@ ul {
 							<h3 id="process-label">Add a process type to create {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="process-form" >
+								<form class="process-form" action="{% url create_process_type_for_resource_type resource_type_id=xbill_object.id %}" method="POST" >
+									{% csrf_token %}
 									{{ process_form|as_bootstrap }}
-									<input type="hidden" name="resourceTypeId" value="{{ xbill_object.id }}" />
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -291,9 +303,10 @@ ul {
 							<h3 id="source-label">Add a source for {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="source-form" >
+								<form class="source-form" action="{% url create_agent_resource_type resource_type_id=xbill_object.id %}" method="POST" >
+									{% csrf_token %}
 									{{ source_form|as_bootstrap }}
-									<input type="hidden" name="resourceTypeId" value="{{ xbill_object.id }}" />
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -317,10 +330,10 @@ ul {
 							<h3 id="input-label">Add an input to {{ xbill_object }}</h3>
 						  </div>
 						  <div class="modal-body">
-								<form class="input-form" >
+								<form class="input-form" action="{% url create_process_type_input process_type_id=xbill_object.id %}" method="POST" >
+									{% csrf_token %}
 									{{ input_form|as_bootstrap }}
-									<input type="hidden" name="processTypeId" value="{{ xbill_object.id }}" />
-
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
 									<button class="btn btn-primary">Save changes</button>
@@ -347,207 +360,113 @@ ul {
     </div>
 
 {% endblock %}
+
+{% block extra_script %}
+	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.10.0/jquery.validate.min.js"></script>
+{% endblock %}
+
 {% block extra_body %}
 	{{ block.super }}
     <script type="text/javascript">
 
 	$(document).ready(function(){
-/*
-		$('.resource-change-form').on('submit', function(){
-			this.submit();
-		});
-*/
-		$('.change-source-form').on('submit', function(){
-			var s = $(this).serialize();
-			var agentId = this['agent'].value;
-			var agentResourceTypeId = this['agentResourceTypeId'].value;
-			var relationshipId = this['relationship'].value;
-			var value = this['value'].value;
-			var leadTime = this['lead_time'].value;
-			var unitId = this['unit_of_value'].value;
-			if (agentId && agentResourceTypeId && relationshipId && unitId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url change_agent_resource_type %}", 
-					s,
-					function(data) {
-						$("*").css("cursor", "auto");
-						if (data == "ok")
-						{
-		 					window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-						}
-						else
-						{
-							alert(data);
-						}
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
 
-			// Stop the normal form submission
-			return false;
+		$('.resource-change-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					name: {
+						required: true
+					},
+					url: {
+						url: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
 		});
 
-		$('.process-change-form').on('submit', function(){
-			var processTypeId = this['processTypeId'].value;
-			var name = this['name'].value;
-			var url = this['url'].value;
-			var description = this['description'].value;
-			var dur = this['estimated_duration'].value;
-			if (name && processTypeId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url change_process_type %}",  { 
-					name: name, 
-					process_type_id: processTypeId,
-					url: url,
-					estimated_duration: dur,
-					description: description },
-					function() {
-						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
-
-			// Stop the normal form submission
-			return false;
+		$('.change-source-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					lead_time: {
+						number: true
+					},
+					value: {
+						number: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
 		});
 
-		$('.change-input-form').on('submit', function(){
-
-			var processTypeResourceTypeId = this['processTypeResourceTypeId'].value;
-			var resourceTypeId = this['resource_type'].value;
-			var relationshipId = this['relationship'].value;
-			var quantity = this['quantity'].value;
-			var unitId = this['unit_of_quantity'].value;
-			//did not work: var s = this.serialize();
-			if (processTypeResourceTypeId && resourceTypeId && relationshipId && unitId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url change_process_type_input %}",  { 
-					process_type_resource_type_id: processTypeResourceTypeId, 
-					resource_type_id: resourceTypeId,
-					relationship_id: relationshipId, 
-					unit_id: unitId,
-					quantity: quantity },
-					//todo: if this is done ajaxy, must clear form
-					function() {
-						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
-
-			// Stop the normal form submission
-			return false;
+		$('.process-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					name: {
+						required: true
+					},
+					url: {
+						url: true
+					},
+					estimated_duration: {
+						number: true
+					},
+					quantity: {
+						required: true,
+						number: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
 		});
 
-		$('.input-form').on('submit', function(){
-
-			// save here
-			var processTypeId = this['processTypeId'].value;
-			var resourceTypeId = this['resource_type'].value;
-			var relationshipId = this['relationship'].value;
-			var quantity = this['quantity'].value;
-			var unitId = this['unit_of_quantity'].value;
-			//did not work: var s = this.serialize();
-			if (processTypeId && resourceTypeId && relationshipId && unitId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url create_process_type_input %}",  { 
-					process_type_id: processTypeId, 
-					resource_type_id: resourceTypeId,
-					relationship_id: relationshipId, 
-					unit_id: unitId,
-					quantity: quantity },
-					//todo: if this is done ajaxy, must clear form
-					function() {
-						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
-
-			// Stop the normal form submission
-			return false;
-		});
-
-		$('.process-form').on('submit', function(){
-			var resourceTypeId = this['resourceTypeId'].value;
-			var name = this['name'].value;
-			var url = this['url'].value;
-			var description = this['description'].value;
-			var dur = this['estimated_duration'].value;
-			var quantity = this['quantity'].value;
-			var unitId = this['unit'].value;
-			if (name && resourceTypeId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url create_process_type_for_resource_type %}",  { 
-					name: name, 
-					resource_type_id: resourceTypeId,
-					url: url,
-					estimated_duration: dur,
-					quantity: quantity,
-					unit_id: unitId,
-					description: description },
-					function() {
-						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
-
-			// Stop the normal form submission
-			return false;
-		});
-
-		$('.source-form').on('submit', function(){
-
-			var agentId = this['agent'].value;
-			var resourceTypeId = this['resourceTypeId'].value;
-			var relationshipId = this['relationship'].value;
-			var value = this['value'].value;
-			var leadTime = this['lead_time'].value;
-			var unitId = this['unit_of_value'].value;
-			if (agentId && resourceTypeId && relationshipId && unitId)
-			{
-				$("*").css("cursor", "progress");
-				$.post("{% url create_agent_resource_type %}",  { 
-					agent_id: agentId, 
-					resource_type_id: resourceTypeId,
-					relationship_id: relationshipId, 
-					unit_id: unitId,
-                    lead_time: leadTime,
-					value: value },
-					function() {
-						$("*").css("cursor", "auto");
-		 				window.location.href = '{% url edit_extended_bill resource_type_id=resource_type.id %}';
-	   				});
-			}
-			else
-			{
-				$(".modal").modal('hide');
-			}
-
-			// Stop the normal form submission
-			return false;
+		$('.process-change-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					name: {
+						required: true
+					},
+					url: {
+						url: true
+					},
+					estimated_duration: {
+						number: true
+					}
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
 		});
 
 

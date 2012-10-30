@@ -17,10 +17,13 @@ class AgentResourceTypeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AgentResourceTypeForm, self).__init__(*args, **kwargs)
-        self.fields["relationship"].choices = [('', '----------')] + [
+        self.fields["agent"].choices = [
+            (agt.id, agt.name) for agt in EconomicAgent.objects.all()
+        ]
+        self.fields["relationship"].choices = [
             (rel.id, rel.name) for rel in ResourceRelationship.objects.filter(resource_effect="+")
         ]
-    
+
     class Meta:
         model = AgentResourceType
         exclude = ('resource_type',)
@@ -28,12 +31,6 @@ class AgentResourceTypeForm(forms.ModelForm):
 
 class XbillProcessTypeForm(forms.ModelForm):
     quantity = forms.DecimalField(max_digits=8, decimal_places=2)
-    unit = forms.ChoiceField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        super(XbillProcessTypeForm, self).__init__(*args, **kwargs)
-        units = Unit.objects.exclude(unit_type="ip").exclude(unit_type="time").exclude(unit_type="value")
-        self.fields["unit"].choices = [('', '--------')] + [(unit.id, unit.name) for unit in units]
 
     class Meta:
         model = ProcessType
@@ -48,7 +45,13 @@ class ChangeProcessTypeForm(forms.ModelForm):
 
 
 class ProcessTypeResourceTypeForm(forms.ModelForm):
-    
+
+    def __init__(self, *args, **kwargs):
+        super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
+        self.fields["relationship"].choices = [
+            (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
+        ]
+
     class Meta:
         model = ProcessTypeResourceType
         exclude = ('process_type',)

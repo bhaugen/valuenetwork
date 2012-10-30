@@ -41,10 +41,10 @@ class Unit(models.Model):
     symbol = models.CharField(_('symbol'), max_length=1, blank=True)
 
     class Meta:
-        ordering = ('abbrev',)
+        ordering = ('name',)
      
     def __unicode__(self):
-        return self.abbrev
+        return self.name
 
 
 ACTIVITY_CHOICES = (
@@ -437,6 +437,9 @@ class ProcessTypeResourceType(models.Model):
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="process_resource_qty_units")
+
+    class Meta:
+        ordering = ('resource_type',)
 
     def __unicode__(self):
         return " ".join([self.process_type.name, self.relationship.name, str(self.quantity), self.resource_type.name])        
