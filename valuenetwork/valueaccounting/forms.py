@@ -48,6 +48,9 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
+        self.fields["resource_type"].choices = [
+            (res.id, res.name) for res in EconomicResourceType.objects.all()
+        ]
         self.fields["relationship"].choices = [
             (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
         ]

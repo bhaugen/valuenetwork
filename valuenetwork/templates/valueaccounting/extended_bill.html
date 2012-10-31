@@ -68,7 +68,7 @@ ul {
 			{% endif %}
 		</h4>
 		{% if resource_type.description %}
-			<div class="description" >{{ resource_type.description|linebreaks }}</div>
+			<div class="description" >{{ resource_type.description|urlize|linebreaks }}</div>
 		{% endif %}
 
 		{% for node in nodes %}
@@ -93,7 +93,7 @@ ul {
 				{% endif %}
 
 				{% if node.xbill_object.description %}
-					<div class="description" >{{ node.xbill_object.description|linebreaks }}</div>
+					<div class="description" >{{ node.xbill_object.description|urlize|linebreaks }}</div>
 				{% endif %}
 
 			{% for close in node.close %}

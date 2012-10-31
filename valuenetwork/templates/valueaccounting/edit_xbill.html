@@ -393,6 +393,28 @@ ul {
 			});
 		});
 
+		$('.source-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					lead_time: {
+						number: true
+					},
+					value: {
+						number: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
+		});
+
 		$('.change-source-form').each( function(){
 			var form = $(this);
 			form.validate({
@@ -469,6 +491,44 @@ ul {
 			});
 		});
 
+
+		$('.input-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					quantity: {
+						number: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
+		});
+
+		$('.change-input-form').each( function(){
+			var form = $(this);
+			form.validate({
+				rules: {
+					quantity: {
+						number: true
+					},
+				},
+				highlight: function(label) {
+					$(label).closest('.control-group').addClass('error');
+				},
+				success: function(label) {
+					label
+						.text('OK!').addClass('valid')
+						.closest('.control-group').addClass('success');
+				}
+			});
+		});
 
 		$(document).ajaxSend(function(event, xhr, settings) {
 			function getCookie(name) {
