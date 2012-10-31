@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.template import RequestContext
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 from django.core import serializers
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import MultipleObjectsReturned
@@ -25,6 +25,10 @@ from valuenetwork.valueaccounting.models import *
 from valuenetwork.valueaccounting.views import *
 from valuenetwork.valueaccounting.forms import *
 from valuenetwork.valueaccounting.utils import *
+
+def test_error(request):
+    x = 11/0
+    return HttpResponse("whatever")
 
 def projects(request):
     roots = Project.objects.filter(parent=None)
@@ -255,9 +259,6 @@ def change_resource_type(request, resource_type_id):
             else:
                 return HttpResponseRedirect('/%s/%s/'
                     % ('accounting/edit-xbomfg', resource_type_id))
-
-#todo: need error return here
-
 
 @login_required
 def create_resource_type(request):

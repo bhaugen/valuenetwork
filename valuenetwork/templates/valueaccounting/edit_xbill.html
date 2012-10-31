@@ -1,5 +1,6 @@
 {% extends "site_base.html" %}
 
+{% load staticfiles %}
 {% load i18n %}
 {% load thumbnail %}
 {% load bootstrap_tags %}
@@ -363,6 +364,7 @@ ul {
 
 {% block extra_script %}
 	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.10.0/jquery.validate.min.js"></script>
+	<script src="{{ STATIC_URL }}/admin/js/admin/RelatedObjectLookups.js"></script>
 {% endblock %}
 
 {% block extra_body %}
