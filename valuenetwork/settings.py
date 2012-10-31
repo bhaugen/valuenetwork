@@ -7,9 +7,9 @@ PACKAGE_ROOT = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = [
+ADMINS = (
     # ("Your Name", "your_email@example.com"),
-]
+)
 
 MANAGERS = ADMINS
 
@@ -143,6 +143,7 @@ INSTALLED_APPS = [
     
     # project
     'valuenetwork.valueaccounting',
+    'valuenetwork.tekextensions',
 ]
 
 THUMBNAIL_DEBUG = True
