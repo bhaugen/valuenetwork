@@ -29,6 +29,4 @@ urlpatterns = patterns("",
         name="change_resource_type"),
     url(r"^create-resource-type/$", 'valuenetwork.valueaccounting.views.create_resource_type', 
         name="create_resource_type"),
-    url(r"^test-error/$", 'valuenetwork.valueaccounting.views.test_error', 
-        name="test_error"),
 )

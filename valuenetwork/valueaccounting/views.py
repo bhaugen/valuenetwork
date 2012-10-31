@@ -25,10 +25,6 @@ from valuenetwork.valueaccounting.views import *
 from valuenetwork.valueaccounting.forms import *
 from valuenetwork.valueaccounting.utils import *
 
-def test_error(request):
-    x = 11/0
-    return HttpResponse("whatever")
-
 def projects(request):
     roots = Project.objects.filter(parent=None)
     
