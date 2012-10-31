@@ -15,7 +15,6 @@ from django.http import HttpResponse, HttpResponseServerError
 from django.core import serializers
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import MultipleObjectsReturned
-from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import simplejson
 from django.forms.models import formset_factory, modelformset_factory
