@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>Add {{ field }}</title>
+{% load staticfiles %}
+{% load bootstrap_tags %}
+<script src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+            <link href="{% static "pinax/css/theme.css" %}" rel="stylesheet">
+            <link href="{% static "bootstrap/css/bootstrap.css" %}" rel="stylesheet">
+            <link href="{% static "bootstrap/css/bootstrap-responsive.css" %}" rel="stylesheet">
+</head>
+<body>
+<div style="margin-left: 1em;">
+<h1>Add {{ field }}</h1>
+<form method="POST" action="/add/{{ field }}">
+        {% csrf_token %}
+        <table>
+        {{ form|as_bootstrap }}
+        </table>
+<p><input type="submit" /> | <a href="javascript:window.close()">Cancel</a></p>
+</form>
+</div>
+</body>
+</html>

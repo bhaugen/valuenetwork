@@ -3,6 +3,8 @@ from decimal import *
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from valuenetwork.tekextensions.widgets import SelectWithPopUp
+
 from valuenetwork.valueaccounting.models import *
 
 
@@ -45,15 +47,26 @@ class ChangeProcessTypeForm(forms.ModelForm):
 
 
 class ProcessTypeResourceTypeForm(forms.ModelForm):
+    resource_type = forms.ModelChoiceField(
+        queryset=EconomicResourceType.objects.all(), 
+        empty_label=None, 
+        widget=SelectWithPopUp(model=EconomicResourceType))
+    relationship = forms.ModelChoiceField(
+        queryset=ResourceRelationship.objects.exclude(resource_effect="+"), 
+        empty_label=None, 
+        widget=SelectWithPopUp(model=ResourceRelationship))
+    unit_of_quantity = forms.ModelChoiceField(
+        queryset=Unit.objects.all(),  
+        widget=SelectWithPopUp(model=Unit))
 
     def __init__(self, *args, **kwargs):
         super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
-        self.fields["resource_type"].choices = [
-            (res.id, res.name) for res in EconomicResourceType.objects.all()
-        ]
-        self.fields["relationship"].choices = [
-            (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
-        ]
+        #self.fields["resource_type"].choices = [
+        #    (res.id, res.name) for res in EconomicResourceType.objects.all()
+        #]
+        #self.fields["relationship"].choices = [
+        #    (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
+        #]
 
     class Meta:
         model = ProcessTypeResourceType

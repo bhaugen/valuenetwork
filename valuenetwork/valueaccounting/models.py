@@ -67,7 +67,7 @@ SIZE_CHOICES = (
 class AgentType(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub-agents')
+        verbose_name=_('parent'), related_name='sub-agents', editable=False)
     member_type = models.CharField(_('member type'), 
         max_length=12, choices=ACTIVITY_CHOICES,
         default='active')
@@ -162,7 +162,7 @@ MATERIALITY_CHOICES = (
 class EconomicResourceType(models.Model):
     name = models.CharField(_('name'), max_length=128)    
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='children')
+        verbose_name=_('parent'), related_name='children', editable=False)
     materiality = models.CharField(_('materiality'), 
         max_length=12, choices=MATERIALITY_CHOICES,
         default='material')
@@ -292,7 +292,7 @@ RESOURCE_EFFECT_CHOICES = (
 
 class ResourceRelationship(models.Model):
     name = models.CharField(_('name'), max_length=32)
-    inverse_name = models.CharField(_('name'), max_length=40, blank=True)
+    inverse_name = models.CharField(_('inverse name'), max_length=40, blank=True)
     resource_effect = models.CharField(_('resource effect'), 
         max_length=12, choices=RESOURCE_EFFECT_CHOICES)
 
@@ -373,7 +373,7 @@ class AgentResourceType(models.Model):
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub_process_types')
+        verbose_name=_('parent'), related_name='sub_process_types', editable=False)
     description = models.TextField(_('description'), blank=True, null=True)
     url = models.CharField(_('url'), max_length=255, blank=True)
     estimated_duration = models.IntegerField(_('estimated duration'), 
@@ -527,7 +527,7 @@ class Project(models.Model):
 class Process(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub_processes')
+        verbose_name=_('parent'), related_name='sub_processes', editable=False)
     process_type = models.ForeignKey(ProcessType,
         verbose_name=_('process type'), related_name='processes')
     project = models.ForeignKey(Project,
