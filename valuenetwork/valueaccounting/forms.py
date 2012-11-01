@@ -15,6 +15,17 @@ class EconomicResourceTypeForm(forms.ModelForm):
         exclude = ('parent',)
 
 
+class EconomicResourceTypeWithPopupForm(forms.ModelForm):
+    unit = forms.ModelChoiceField(
+        queryset=Unit.objects.all(),  
+        widget=SelectWithPopUp(model=Unit))
+
+    class Meta:
+        model = EconomicResourceType
+        exclude = ('parent',)
+
+
+
 class AgentResourceTypeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):

@@ -14,7 +14,10 @@ def get_model_form(model_name):
     for app in app_list:
         for model in get_models(app):
             if model.__name__ == model_name: 
-                form = modelform_factory(model)
+                #import pdb; pdb.set_trace()
+                form = model.add_new_form()
+                if not form:
+                    form = modelform_factory(model)
                 return form
 
     raise Exception('Did not find the model %s' % (model_name))

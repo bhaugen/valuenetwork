@@ -10,7 +10,7 @@ def add_new_model(request, model_name, form=None):
 
     if not form:
         form = get_model_form(normal_model_name)
-
+    #import pdb; pdb.set_trace()
     if request.method == 'POST':
         form = form(request.POST)
         if form.is_valid():

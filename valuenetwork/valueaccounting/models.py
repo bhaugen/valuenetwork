@@ -46,6 +46,10 @@ class Unit(models.Model):
     def __unicode__(self):
         return self.name
 
+    @classmethod
+    def add_new_form(cls):
+        return None
+
 
 ACTIVITY_CHOICES = (
     ('active', _('active contributor')),
@@ -180,6 +184,11 @@ class EconomicResourceType(models.Model):
     def __unicode__(self):
         return self.name
     
+    @classmethod
+    def add_new_form(cls):
+        from valuenetwork.valueaccounting.forms import EconomicResourceTypeWithPopupForm
+        return EconomicResourceTypeWithPopupForm
+
     def save(self, *args, **kwargs):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
@@ -301,6 +310,10 @@ class ResourceRelationship(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    @classmethod
+    def add_new_form(cls):
+        return None
 
     def inverse_label(self):
         if self.inverse_name:
