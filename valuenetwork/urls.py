@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-#from django.conf.urls.static import static
+from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from django.views.generic.simple import direct_to_template
@@ -42,5 +42,5 @@ urlpatterns = patterns("",
     url(r'^add/(?P<model_name>\w+)/?$', 'valuenetwork.tekextensions.views.add_new_model'),
 )
 
-#urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += staticfiles_urlpatterns()

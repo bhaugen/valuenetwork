@@ -24,6 +24,9 @@ class EconomicResourceTypeWithPopupForm(forms.ModelForm):
         model = EconomicResourceType
         exclude = ('parent',)
 
+    @classmethod
+    def is_multipart(cls):
+        return True
 
 
 class AgentResourceTypeForm(forms.ModelForm):

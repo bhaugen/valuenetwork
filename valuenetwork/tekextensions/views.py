@@ -10,9 +10,18 @@ def add_new_model(request, model_name, form=None):
 
     if not form:
         form = get_model_form(normal_model_name)
+
     #import pdb; pdb.set_trace()
+    try:
+        multipart = form.is_multipart()
+    except:
+        multipart = False
+
     if request.method == 'POST':
-        form = form(request.POST)
+        if multipart:
+            form = form(request.POST, request.FILES)
+        else:
+            form = form(request.POST)        
         if form.is_valid():
             try:
                 new_obj = form.save()
@@ -26,6 +35,6 @@ def add_new_model(request, model_name, form=None):
     else:
         form = form()
 
-    page_context = {'form': form, 'field': normal_model_name}
+    page_context = {'form': form, 'field': normal_model_name, 'multipart': multipart}
     return render_to_response('tekextensions/popup.html', page_context, context_instance=RequestContext(request))
 

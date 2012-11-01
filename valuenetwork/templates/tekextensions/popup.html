@@ -11,7 +11,7 @@
 <body>
 <div style="margin-left: 1em;">
 <h1>Add {{ field }}</h1>
-<form method="POST" action="/add/{{ field }}">
+<form method="POST" {% if multipart %}enctype="multipart/form-data"{% endif %} action="/add/{{ field }}">
         {% csrf_token %}
         <table>
         {{ form|as_bootstrap }}

@@ -14,8 +14,12 @@ def get_model_form(model_name):
     for app in app_list:
         for model in get_models(app):
             if model.__name__ == model_name: 
-                #import pdb; pdb.set_trace()
-                form = model.add_new_form()
+                try:
+                    # add_new_form is a class method
+                    # that can be used to specialize the form
+                    form = model.add_new_form()
+                except AttributeError:
+                    form = None
                 if not form:
                     form = modelform_factory(model)
                 return form
