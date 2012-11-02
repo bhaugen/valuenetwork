@@ -51,6 +51,26 @@ class Unit(models.Model):
         return None
 
 
+class Role(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+    rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    created_by = models.ForeignKey(User, verbose_name=_('created by'),
+        related_name='roles_created', blank=True, null=True)
+    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
+        related_name='roles_changed', blank=True, null=True)
+    slug = models.SlugField(_("Page name"), editable=False)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __unicode__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        unique_slugify(self, self.name)
+        super(Role, self).save(*args, **kwargs)
+
+
 ACTIVITY_CHOICES = (
     ('active', _('active contributor')),
     ('affiliate', _('close affiliate')),
@@ -156,6 +176,11 @@ class AgentAssociation(models.Model):
     description = models.TextField(_('description'), blank=True, null=True)
 
 
+""" design_issue:
+    Materiality is probably part of a Category model.
+
+"""
+
 MATERIALITY_CHOICES = (
     ('material', _('material')),
     ('intellectual', _('intellectual')),
@@ -164,6 +189,11 @@ MATERIALITY_CHOICES = (
 
 
 class EconomicResourceType(models.Model):
+    """ design_issue:
+        If EconomicResourceTypes are to replace Roles for valuation,
+        they will need some valuation field.
+
+    """
     name = models.CharField(_('name'), max_length=128)    
     parent = models.ForeignKey('self', blank=True, null=True, 
         verbose_name=_('parent'), related_name='children', editable=False)
@@ -291,6 +321,13 @@ class EconomicResource(models.Model):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
 
+""" design_issue:
+    RESOURCE_EFFECTs for ResourceRelationship
+    should just be input or output, not + - = etc.
+    Those are appropriate for EventTypes, 
+    not ResourceRelationships.
+
+"""
 
 RESOURCE_EFFECT_CHOICES = (
     ('+', _('increase')),
@@ -327,12 +364,23 @@ class ResourceRelationship(models.Model):
         else:
             return self.name
 
+""" design_issue:
+    role field commented out because 
+    EconomicResourceTypes can do the trick.
+
+"""
 
 class AgentResourceType(models.Model):
     agent = models.ForeignKey(EconomicAgent,
         verbose_name=_('agent'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='agents')
+    #role = models.ForeignKey(Role,
+    #    blank=True, null=True,
+    #    verbose_name=_('role'), related_name='agent_resource_types')
+    score = models.DecimalField(_('score'), max_digits=8, decimal_places=2, 
+        default=Decimal("0.0"),
+        help_text=_("the quantity of contributions of this resource type from this agent in this role"))
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='agent_resource_types')
@@ -439,11 +487,20 @@ class ProcessType(models.Model):
         return ChangeProcessTypeForm(instance=self)
 
 
+""" design_issue:
+    role field commented out because 
+    EconomicResourceTypes can do the trick.
+
+"""
+
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
         verbose_name=_('process type'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='process_types')
+    #role = models.ForeignKey(Role,
+    #    blank=True, null=True,
+    #    verbose_name=_('role'), related_name='process_resource_types')
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='process_resource_types')
@@ -597,26 +654,11 @@ class EventType(models.Model):
         unique_slugify(self, self.name)
         super(EventType, self).save(*args, **kwargs)
 
+""" design_issue:
+    role field could be removed here, too, because 
+    EconomicResourceTypes can do the trick.
 
-class Role(models.Model):
-    name = models.CharField(_('name'), max_length=128)
-    rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
-    created_by = models.ForeignKey(User, verbose_name=_('created by'),
-        related_name='roles_created', blank=True, null=True)
-    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
-        related_name='roles_changed', blank=True, null=True)
-    slug = models.SlugField(_("Page name"), editable=False)
-
-    class Meta:
-        ordering = ('name',)
-
-    def __unicode__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        unique_slugify(self, self.name)
-        super(Role, self).save(*args, **kwargs)
-
+"""
 
 class Commitment(models.Model):
     event_type = models.ForeignKey(EventType, 
@@ -754,6 +796,11 @@ class Reciprocity(models.Model):
         if self.initiating_commitment.to_agent.id != self.reciprocal_commitment.from_agent.id:
             raise ValidationError('Initiating commitment to_agent must be the reciprocal commitment from_agent.')
 
+""" design_issue:
+    role field could be removed here, too, because 
+    EconomicResourceTypes can do the trick.
+
+"""
 
 class EconomicEvent(models.Model):
     event_type = models.ForeignKey(EventType, 
@@ -906,6 +953,13 @@ class EventSummary(object):
 
     def quantity_formatted(self):
         return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
+
+
+""" design_issue:
+    role field could be replaced here by
+    EconomicResourceType.
+
+"""
 
 
 class CachedEventSummary(models.Model):

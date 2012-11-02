@@ -1,0 +1,55 @@
+a {
+    color: #0000e6;
+}
+a:hover {
+    color: #0000e6;
+}
+.btn {
+    padding-top: 2px;
+    padding-bottom: 3px;
+    font-weight: bold;
+}
+.btn-primary {
+  background-color: 8A8A5C;
+  background-image: -ms-linear-gradient(top, #ADAD85, #8A8A5C);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ADAD85), to(#8A8A5C));
+  background-image: -webkit-linear-gradient(top, #ADAD85, #8A8A5C);
+  background-image: -o-linear-gradient(top, #ADAD85, #8A8A5C);
+  background-image: -moz-linear-gradient(top, #ADAD85, #8A8A5C);
+  background-image: linear-gradient(top, #ADAD85, #8A8A5C);
+  background-repeat: repeat-x;
+  border-color: #8A8A5C #8A8A5C #6B6B47;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ADAD85', endColorstr='#8A8A5C', GradientType=0);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+}
+
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary.active,
+.btn-primary.disabled,
+.btn-primary[disabled] {
+  background-color: #8A8A5C;
+}
+.btn-info {
+    margin-top: 2px;
+    background-color: #669999;
+    background-image: -ms-linear-gradient(top, #94B8B8, #669999);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#94B8B8), to(#669999));
+    background-image: -webkit-linear-gradient(top, #94B8B8, #669999);
+    background-image: -o-linear-gradient(top, #94B8B8, #669999);
+    background-image: -moz-linear-gradient(top, #94B8B8, #669999);
+    background-image: linear-gradient(top, #94B8B8, #669999);
+    background-repeat: repeat-x;
+    border-color: #669999 #669999 #527A7A;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    filter: progid:dximagetransform.microsoft.gradient(startColorstr='#94B8B8', endColorstr='#669999', GradientType=0);
+    filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+}
+.btn-info:hover,
+.btn-info:active,
+.btn-info.active,
+.btn-info.disabled,
+.btn-info[disabled] {
+  background-color: #669999;
+}

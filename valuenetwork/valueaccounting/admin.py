@@ -32,7 +32,7 @@ admin.site.register(EconomicResourceType, EconomicResourceTypeAdmin)
 
 
 class AgentResourceTypeAdmin(admin.ModelAdmin):
-    list_display = ('agent', 'resource_type', 'relationship')
+    list_display = ('agent', 'resource_type', 'score','relationship')
     list_filter = ['agent', 'resource_type']
     
 admin.site.register(AgentResourceType, AgentResourceTypeAdmin)
