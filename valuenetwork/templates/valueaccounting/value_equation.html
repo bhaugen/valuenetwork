@@ -92,8 +92,8 @@ textarea {
 			<thead>
 				<th>Member</th>
 				<th>Project</th>
-				<th>Role</th>
-				<th>Role Rate</th>
+				<th>Resource Type</th>
+				<th>Rate</th>
 				<th>Hours</th>
 				<th>Reputation</th>
 				<th>Seniority</th>
@@ -105,8 +105,8 @@ textarea {
 					<tr class="{% cycle 'odd' 'even' %}">
 						<td>{{ event.agent }}</td>
 						<td>{{ event.project }}</td>
-						<td>{{ event.role }}</td>
-						<td style="text-align: right;" >{{ event.role_rate }}</td>
+						<td>{{ event.resource_type }}</td>
+						<td style="text-align: right;" >{{ event.resource_type_rate }}</td>
 						<td style="text-align: right;" >{{ event.quantity_formatted }}</td>
 						<td style="text-align: right;" >{{ event.reputation }}</td>
 						<td style="text-align: right;" >{{ event.agent.seniority }}</td>

@@ -43,10 +43,10 @@ text {
 			This is just a mockup for discussion; it does not work yet.  But it is intended to be an easy-to-use Timer.
 		</p>
 		<p>
-			How it could work: when you select a Project and Role and enter a Description and URL (optional) and click "Start", it will start a time contribution at the current time.  Whenever you change any of that information, it will end and post one time contribution and start another.  When you click Stop, it will post the last time contribution.
+			How it could work: when you select a Project and Type of Work and enter a Description and URL (optional) and click "Start", it will start a time contribution at the current time.  Whenever you change any of that information, it will end and post one time contribution and start another.  When you click Stop, it will post the last time contribution.
 		</p>
 		<p>
-			Alternatively, you could click Start and then add Description, URL, select Project and Role, etc.  Then you could change those information elements until you clicked Stop or Start again.  (In that case, the Start button should probably move up above Description.)
+			Alternatively, you could click Start and then add Description, URL, select Project and Type of Work, etc.  Then you could change those information elements until you clicked Stop or Start again.  (In that case, the Start button should probably move up above Description.)
 		</p>
 		<p>
 			We could also do a more conventional ~(not a Timer)~ interface where you enter the date and the hours.
@@ -107,11 +107,11 @@ text {
 		</div>
 
 		<div style="float:left; padding-left: 1em; ">
-			<legend>Select a Role</legend>
+			<legend>Select a Type of Work</legend>
 			<ul>
-				{% for role in roles %}
+				{% for rt in resource_types %}
 				<li>
-					<input type="radio" name="role" /> {{ role }}
+					<input type="radio" name="resource_type" /> {{ rt }}
 				</li>
 			{% endfor %}
 

@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 
 from easy_thumbnails.fields import ThumbnailerImageField
 
@@ -22,6 +23,25 @@ REA is also the basis for ISO/IEC FDIS 15944-4 ACCOUNTING AND ECONOMIC ONTOLOGY
 http://global.ihs.com/doc_detail.cfm?item_s_key=00495115&item_key_date=920616
 
 """
+
+CATEGORIZATION_CHOICES = (
+    ('Anything', _('Anything')),
+    ('EconomicResourceType', _('EconomicResourceType')),
+)
+
+
+class Category(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+    applies_to = models.CharField(_('applies to'), max_length=128, 
+        choices=CATEGORIZATION_CHOICES)
+    description = models.TextField(_('description'), blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = 'categories'
+        ordering = ('name',)
+     
+    def __unicode__(self):
+        return self.name
 
 
 UNIT_TYPE_CHOICES = (
@@ -49,26 +69,6 @@ class Unit(models.Model):
     @classmethod
     def add_new_form(cls):
         return None
-
-
-class Role(models.Model):
-    name = models.CharField(_('name'), max_length=128)
-    rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
-    created_by = models.ForeignKey(User, verbose_name=_('created by'),
-        related_name='roles_created', blank=True, null=True)
-    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
-        related_name='roles_changed', blank=True, null=True)
-    slug = models.SlugField(_("Page name"), editable=False)
-
-    class Meta:
-        ordering = ('name',)
-
-    def __unicode__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        unique_slugify(self, self.name)
-        super(Role, self).save(*args, **kwargs)
 
 
 ACTIVITY_CHOICES = (
@@ -189,14 +189,12 @@ MATERIALITY_CHOICES = (
 
 
 class EconomicResourceType(models.Model):
-    """ design_issue:
-        If EconomicResourceTypes are to replace Roles for valuation,
-        they will need some valuation field.
-
-    """
     name = models.CharField(_('name'), max_length=128)    
     parent = models.ForeignKey('self', blank=True, null=True, 
         verbose_name=_('parent'), related_name='children', editable=False)
+    category = models.ForeignKey(Category, blank=True, null=True, 
+        verbose_name=_('category'), related_name='resource_types',
+        limit_choices_to=Q(applies_to='Anything') | Q(applies_to='EconomicResourceType'))
     materiality = models.CharField(_('materiality'), 
         max_length=12, choices=MATERIALITY_CHOICES,
         default='material')
@@ -206,6 +204,11 @@ class EconomicResourceType(models.Model):
         upload_to='photos', blank=True, null=True)
     url = models.CharField(_('url'), max_length=255, blank=True)
     description = models.TextField(_('description'), blank=True, null=True)
+    rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    created_by = models.ForeignKey(User, verbose_name=_('created by'),
+        related_name='resource_types_created', blank=True, null=True)
+    changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
+        related_name='resource_types_changed', blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
     
     class Meta:
@@ -364,23 +367,16 @@ class ResourceRelationship(models.Model):
         else:
             return self.name
 
-""" design_issue:
-    role field commented out because 
-    EconomicResourceTypes can do the trick.
 
-"""
 
 class AgentResourceType(models.Model):
     agent = models.ForeignKey(EconomicAgent,
         verbose_name=_('agent'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='agents')
-    #role = models.ForeignKey(Role,
-    #    blank=True, null=True,
-    #    verbose_name=_('role'), related_name='agent_resource_types')
     score = models.DecimalField(_('score'), max_digits=8, decimal_places=2, 
         default=Decimal("0.0"),
-        help_text=_("the quantity of contributions of this resource type from this agent in this role"))
+        help_text=_("the quantity of contributions of this resource type from this agent"))
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='agent_resource_types')
@@ -487,20 +483,11 @@ class ProcessType(models.Model):
         return ChangeProcessTypeForm(instance=self)
 
 
-""" design_issue:
-    role field commented out because 
-    EconomicResourceTypes can do the trick.
-
-"""
-
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
         verbose_name=_('process type'), related_name='resource_types')
     resource_type = models.ForeignKey(EconomicResourceType, 
         verbose_name=_('resource type'), related_name='process_types')
-    #role = models.ForeignKey(Role,
-    #    blank=True, null=True,
-    #    verbose_name=_('role'), related_name='process_resource_types')
     relationship = models.ForeignKey(ResourceRelationship,
         blank=True, null=True,
         verbose_name=_('relationship'), related_name='process_resource_types')
@@ -654,11 +641,6 @@ class EventType(models.Model):
         unique_slugify(self, self.name)
         super(EventType, self).save(*args, **kwargs)
 
-""" design_issue:
-    role field could be removed here, too, because 
-    EconomicResourceTypes can do the trick.
-
-"""
 
 class Commitment(models.Model):
     event_type = models.ForeignKey(EventType, 
@@ -671,9 +653,6 @@ class Commitment(models.Model):
     from_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="given_commitments", verbose_name=_('from'))
-    from_agent_role = models.ForeignKey(Role,
-        blank=True, null=True,
-        verbose_name=_('role'), related_name='commitments')
     to_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="taken_commitments", verbose_name=_('to'))
@@ -796,11 +775,6 @@ class Reciprocity(models.Model):
         if self.initiating_commitment.to_agent.id != self.reciprocal_commitment.from_agent.id:
             raise ValidationError('Initiating commitment to_agent must be the reciprocal commitment from_agent.')
 
-""" design_issue:
-    role field could be removed here, too, because 
-    EconomicResourceTypes can do the trick.
-
-"""
 
 class EconomicEvent(models.Model):
     event_type = models.ForeignKey(EventType, 
@@ -809,9 +783,6 @@ class EconomicEvent(models.Model):
     from_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="given_events", verbose_name=_('from'))
-    from_agent_role = models.ForeignKey(Role,
-        blank=True, null=True,
-        verbose_name=_('role'), related_name='events')
     to_agent = models.ForeignKey(EconomicAgent,
         blank=True, null=True,
         related_name="taken_events", verbose_name=_('to'))
@@ -941,25 +912,19 @@ class Compensation(models.Model):
 
 
 class EventSummary(object):
-    def __init__(self, agent, project, role, quantity, value=Decimal('0.0')):
+    def __init__(self, agent, project, resource_type, quantity, value=Decimal('0.0')):
         self.agent = agent
         self.project = project
-        self.role = role
+        self.resource_type = resource_type
         self.quantity = quantity
         self.value=value
 
     def key(self):
-        return "-".join([str(self.agent.id), str(self.role.id)])
+        return "-".join([str(self.agent.id), str(self.resource_type.id)])
 
     def quantity_formatted(self):
         return self.quantity.quantize(Decimal('.01'), rounding=ROUND_UP)
 
-
-""" design_issue:
-    role field could be replaced here by
-    EconomicResourceType.
-
-"""
 
 
 class CachedEventSummary(models.Model):
@@ -969,10 +934,10 @@ class CachedEventSummary(models.Model):
     project = models.ForeignKey(Project,
         blank=True, null=True,
         verbose_name=_('project'), related_name='cached_events')
-    role = models.ForeignKey(Role,
+    resource_type = models.ForeignKey(EconomicResourceType,
         blank=True, null=True,
-        verbose_name=_('role'), related_name='cached_events')
-    role_rate = models.DecimalField(_('role_rate'), max_digits=8, decimal_places=2, default=Decimal("1.0"))
+        verbose_name=_('resource type'), related_name='cached_events')
+    resource_type_rate = models.DecimalField(_('resource type rate'), max_digits=8, decimal_places=2, default=Decimal("1.0"))
     importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("1"))
     reputation = models.DecimalField(_('reputation'), max_digits=8, decimal_places=2, 
         default=Decimal("1.00"))
@@ -982,7 +947,7 @@ class CachedEventSummary(models.Model):
         default=Decimal("0.0"))
 
     class Meta:
-        ordering = ('agent', 'project', 'role')
+        ordering = ('agent', 'project', 'resource_type')
 
     def __unicode__(self):
         return ' '.join([
@@ -990,8 +955,8 @@ class CachedEventSummary(models.Model):
             self.agent.name,
             'Project:',
             self.project.name,
-            'Role:',
-            self.role.name,
+            'Resource Type:',
+            self.resource_type.name,
         ])
 
     @classmethod
@@ -1000,17 +965,17 @@ class CachedEventSummary(models.Model):
         event_list = EconomicEvent.objects.filter(project__in=all_subs)
         summaries = {}
         for event in event_list:
-            key = "-".join([str(event.from_agent.id), str(event.project.id), str(event.from_agent_role.id)])
+            key = "-".join([str(event.from_agent.id), str(event.project.id), str(event.resource_type.id)])
             if not key in summaries:
-                summaries[key] = EventSummary(event.from_agent, event.project, event.from_agent_role, Decimal('0.0'))
+                summaries[key] = EventSummary(event.from_agent, event.project, event.resource_type, Decimal('0.0'))
             summaries[key].quantity += event.quantity
         summaries = summaries.values()
         for summary in summaries:
             ces = cls(
                 agent=summary.agent,
                 project=summary.project,
-                role=summary.role,
-                role_rate=summary.role.rate,
+                resource_type=summary.resource_type,
+                resource_type_rate=summary.resource_type.rate,
                 importance=summary.project.importance,
                 quantity=summary.quantity,
             )

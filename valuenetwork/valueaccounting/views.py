@@ -95,12 +95,13 @@ def log_time(request):
         member = "Unregistered"
     form = TimeForm()
     roots = Project.objects.filter(parent=None)
-    roles = Role.objects.all()
+    cat = Category.objects.get(name="Type of work")
+    resource_types = EconomicResourceType.objects.filter(category=cat)
     return render_to_response("valueaccounting/log_time.html", {
         "member": member,
         "form": form,
         "roots": roots,
-        "roles": roles,
+        "resource_types": resource_types,
     }, context_instance=RequestContext(request))
 
 
@@ -137,8 +138,8 @@ def value_equation(request, project_id):
         summaries = CachedEventSummary.summarize_events(project)
     all_subs = project.with_all_sub_projects()
     summaries = CachedEventSummary.objects.select_related(
-        'agent', 'project', 'role').filter(project__in=all_subs).order_by(
-        'agent__name', 'project__name', 'role__name')
+        'agent', 'project', 'resource_type').filter(project__in=all_subs).order_by(
+        'agent__name', 'project__name', 'resource_type__name')
     total = 0
     agent_totals = []
     init = {"equation": "( hours * ( rate + importance + reputation ) ) + seniority"}
@@ -169,7 +170,7 @@ def value_equation(request, project_id):
             #import pdb; pdb.set_trace()
             for summary in summaries:
                 safe_dict['hours'] = summary.quantity
-                safe_dict['rate'] = summary.role_rate
+                safe_dict['rate'] = summary.resource_type_rate
                 safe_dict['importance'] = summary.importance
                 safe_dict['reputation'] = summary.reputation
                 safe_dict['seniority'] = Decimal(summary.agent.seniority())
