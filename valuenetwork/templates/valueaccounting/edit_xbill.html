@@ -261,38 +261,41 @@ ul {
 					{% endif %}
 
 
-						{% if xb_type == "economic-resource-type" %}
-						<div>
-							<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">
-								{% if xbill_object.producing_process_type_relationships %}
-									Add another process type to create {{ xbill_object }}
-								{% else %}
-									Add a process type to create {{ xbill_object }}
-								{% endif %}
-							</a>
-						</div>
+					{% if xb_type == "economic-resource-type" %}
+						{% comment %} todo: type of work is a hack based on a user-defined name {% endcomment %}
+						{% if not xbill_object.category.name = "Type of work" %}
+							<div>
+								<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">
+									{% if xbill_object.producing_process_type_relationships %}
+										Add another process type to create {{ xbill_object }}
+									{% else %}
+										Add a process type to create {{ xbill_object }}
+									{% endif %}
+								</a>
+							</div>
 
 
-						<div class="modal hide fade" id="processForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
-						  <div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-							<h3 id="process-label">Add a process type to create {{ xbill_object }}</h3>
-						  </div>
-						  <div class="modal-body">
-								<form class="process-form" action="{% url create_process_type_for_resource_type resource_type_id=xbill_object.id %}" method="POST" >
-									{% csrf_token %}
-									{{ process_form|as_bootstrap }}
-									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
-								  <div class="modal-footer">
-									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-									<button class="btn btn-primary">Save changes</button>
-								  </div>
+							<div class="modal hide fade" id="processForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="process-label" aria-hidden="true">
+							  <div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+								<h3 id="process-label">Add a process type to create {{ xbill_object }}</h3>
+							  </div>
+							  <div class="modal-body">
+									<form class="process-form" action="{% url create_process_type_for_resource_type resource_type_id=xbill_object.id %}" method="POST" >
+										{% csrf_token %}
+										{{ process_form|as_bootstrap }}
+										<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
+									  <div class="modal-footer">
+										<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+										<button class="btn btn-primary">Save changes</button>
+									  </div>
 
 
-								</form>
-						  </div>
+									</form>
+							  </div>
 
-						</div>
+							</div>
+						{% endif %}
 
 						<div>
 							<a href="#sourceForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a source for {{ xbill_object }}</a>							

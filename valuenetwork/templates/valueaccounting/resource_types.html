@@ -60,7 +60,7 @@ li {
 		<ul>
 			{% for resource_type in roots %}
 				<li>
-					<span class="name">{{ resource_type }}</span> 
+					<span class="name">{{ resource_type }}</span> {{ resource_type.category.name }}
 
 					{% include  "valueaccounting/_resource_type.html" %}
 

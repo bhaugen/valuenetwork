@@ -33,7 +33,8 @@ def projects(request):
     }, context_instance=RequestContext(request))
 
 def resource_types(request):
-    roots = EconomicResourceType.objects.all()
+    cat = Category.objects.get(name="Type of work")
+    roots = EconomicResourceType.objects.exclude(category=cat)
     create_form = EconomicResourceTypeForm()
     return render_to_response("valueaccounting/resource_types.html", {
         "roots": roots,
