@@ -187,6 +187,13 @@ MATERIALITY_CHOICES = (
     ('time-based', _('time-based')),
 )
 
+class EconomicResourceTypeManager(models.Manager):
+
+    def types_of_work(self):
+        cat = Category.objects.get(name="Type of work")
+        return EconomicResourceType.objects.filter(category=cat)
+
+
 
 class EconomicResourceType(models.Model):
     name = models.CharField(_('name'), max_length=128)    
@@ -211,6 +218,8 @@ class EconomicResourceType(models.Model):
         related_name='resource_types_changed', blank=True, null=True)
     slug = models.SlugField(_("Page name"), editable=False)
     
+    objects = EconomicResourceTypeManager()
+
     class Meta:
         ordering = ('name',)
     
@@ -535,8 +544,12 @@ class ProcessTypeResourceType(models.Model):
         return "-".join(["ProcessResource", str(self.id)])
 
     def xbill_change_form(self):
-        from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm
-        return ProcessTypeResourceTypeForm(instance=self)
+        from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm, LaborInputForm
+        #todo: hack based on user-changeable string
+        if self.resource_type.category.name == "Type of work":
+            return LaborInputForm(instance=self)
+        else:
+            return ProcessTypeResourceTypeForm(instance=self)
 
 
 class Project(models.Model):

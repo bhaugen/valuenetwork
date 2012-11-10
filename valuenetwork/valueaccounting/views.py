@@ -35,6 +35,7 @@ def projects(request):
 def resource_types(request):
     cat = Category.objects.get(name="Type of work")
     roots = EconomicResourceType.objects.exclude(category=cat)
+    #roots = EconomicResourceType.objects.all()
     create_form = EconomicResourceTypeForm()
     return render_to_response("valueaccounting/resource_types.html", {
         "roots": roots,
@@ -98,6 +99,7 @@ def log_time(request):
     roots = Project.objects.filter(parent=None)
     cat = Category.objects.get(name="Type of work")
     resource_types = EconomicResourceType.objects.filter(category=cat)
+    #resource_types = EconomicResourceType.objects.all()
     return render_to_response("valueaccounting/log_time.html", {
         "member": member,
         "form": form,

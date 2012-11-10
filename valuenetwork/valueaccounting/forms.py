@@ -73,14 +73,32 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
         queryset=Unit.objects.all(),  
         widget=SelectWithPopUp(model=Unit))
 
-    def __init__(self, *args, **kwargs):
-        super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
+    #def __init__(self, *args, **kwargs):
+    #    super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
         #self.fields["resource_type"].choices = [
         #    (res.id, res.name) for res in EconomicResourceType.objects.all()
         #]
         #self.fields["relationship"].choices = [
         #    (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
         #]
+
+    class Meta:
+        model = ProcessTypeResourceType
+        exclude = ('process_type',)
+
+
+class LaborInputForm(forms.ModelForm):
+    resource_type = forms.ModelChoiceField(
+        queryset=EconomicResourceType.objects.types_of_work(), 
+        empty_label=None, 
+        widget=SelectWithPopUp(model=EconomicResourceType))
+    relationship = forms.ModelChoiceField(
+        queryset=ResourceRelationship.objects.exclude(resource_effect="+"), 
+        empty_label=None, 
+        widget=SelectWithPopUp(model=ResourceRelationship))
+    unit_of_quantity = forms.ModelChoiceField(
+        queryset=Unit.objects.filter(unit_type='time'),  
+        widget=SelectWithPopUp(model=Unit))
 
     class Meta:
         model = ProcessTypeResourceType

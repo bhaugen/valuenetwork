@@ -18,6 +18,12 @@ h4 a {
 	font-size: 1.4em;
 }
 
+.score {
+	font-weight: normal;
+	font-style: italic;
+}
+
+
 ul {
 	list-style-type:none;
 	margin-left: 0;
@@ -162,6 +168,10 @@ ul {
 						<a href="{{ xbill_object.url }}" target="blank">{{ xbill_object }}</a>
 					{% else %}
 						 {{ xbill_object }}
+					{% endif %}
+
+					{% if xbill_node.score %}
+						<span class="score" > Score: {{ xbill_node.score }} </span>
 					{% endif %}
 
 					{% if xbill_object.photo %}
