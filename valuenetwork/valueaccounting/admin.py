@@ -15,7 +15,7 @@ admin.site.register(Category, CategoryAdmin)
 
 
 class ResourceRelationshipAdmin(admin.ModelAdmin):
-    list_display = ('name', 'inverse_name', 'resource_effect' )
+    list_display = ('name', 'inverse_name', 'direction' )
 
 admin.site.register(ResourceRelationship, ResourceRelationshipAdmin)
 

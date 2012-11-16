@@ -37,7 +37,7 @@ class AgentResourceTypeForm(forms.ModelForm):
             (agt.id, agt.name) for agt in EconomicAgent.objects.all()
         ]
         self.fields["relationship"].choices = [
-            (rel.id, rel.name) for rel in ResourceRelationship.objects.filter(resource_effect="+")
+            (rel.id, rel.name) for rel in ResourceRelationship.objects.filter(direction='out')
         ]
 
     class Meta:
@@ -66,7 +66,7 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
         empty_label=None, 
         widget=SelectWithPopUp(model=EconomicResourceType))
     relationship = forms.ModelChoiceField(
-        queryset=ResourceRelationship.objects.exclude(resource_effect="+"), 
+        queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
     unit_of_quantity = forms.ModelChoiceField(
@@ -79,7 +79,7 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
         #    (res.id, res.name) for res in EconomicResourceType.objects.all()
         #]
         #self.fields["relationship"].choices = [
-        #    (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(resource_effect="+")
+        #    (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(direction='out')
         #]
 
     class Meta:
@@ -93,7 +93,7 @@ class LaborInputForm(forms.ModelForm):
         empty_label=None, 
         widget=SelectWithPopUp(model=EconomicResourceType))
     relationship = forms.ModelChoiceField(
-        queryset=ResourceRelationship.objects.exclude(resource_effect="+"), 
+        queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
     unit_of_quantity = forms.ModelChoiceField(

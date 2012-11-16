@@ -144,13 +144,13 @@ class EconomicAgent(models.Model):
         return "green"
 
     def produced_resource_type_relationships(self):
-        return self.resource_types.filter(relationship__resource_effect='+')
+        return self.resource_types.filter(relationship__direction='out')
 
     def produced_resource_types(self):
         return [ptrt.resource_type for ptrt in self.produced_resource_type_relationships()]
 
     def consumed_resource_type_relationships(self):
-        return self.resource_types.exclude(relationship__resource_effect='+')
+        return self.resource_types.filter(relationship__direction='in')
 
     def consumed_resource_types(self):
         return [ptrt.resource_type for ptrt in self.consumed_resource_type_relationships()]
@@ -245,22 +245,22 @@ class EconomicResourceType(models.Model):
         return "red"
 
     def producing_process_type_relationships(self):
-        return self.process_types.filter(relationship__resource_effect='+')
+        return self.process_types.filter(relationship__direction='out')
 
     def producing_process_types(self):
         return [pt.process_type for pt in self.producing_process_type_relationships()]
 
     def consuming_process_type_relationships(self):
-        return self.process_types.exclude(relationship__resource_effect='+')
+        return self.process_types.filter(relationship__direction='in')
 
     def consuming_process_types(self):
         return [pt.process_type for pt in self.consuming_process_type_relationships()]
 
     def producing_agent_relationships(self):
-        return self.agents.filter(relationship__resource_effect='+')
+        return self.agents.filter(relationship__direction='out')
 
     def consuming_agent_relationships(self):
-        return self.agents.exclude(relationship__resource_effect='+')
+        return self.agents.filter(relationship__direction='in')
 
     def consuming_agents(self):
         return [art.agent for art in self.consuming_agent_relationships()]
@@ -276,7 +276,7 @@ class EconomicResourceType(models.Model):
         return [art.agent for art in self.distributor_relationships()]
 
     def producer_relationships(self):
-        return self.agents.filter(relationship__resource_effect='+').exclude(relationship__name='distributes')
+        return self.agents.filter(relationship__direction='out').exclude(relationship__name='distributes')
 
     def producers(self):
         arts = self.producer_relationships()
@@ -333,26 +333,17 @@ class EconomicResource(models.Model):
         unique_slugify(self, self.name)
         super(EconomicResourceType, self).save(*args, **kwargs)
 
-""" design_issue:
-    RESOURCE_EFFECTs for ResourceRelationship
-    should just be input or output, not + - = etc.
-    Those are appropriate for EventTypes, 
-    not ResourceRelationships.
 
-"""
-
-RESOURCE_EFFECT_CHOICES = (
-    ('+', _('increase')),
-    ('-', _('decrease')),
-    ('x', _('transfer')), #means - for from_agent, + for to_agent
-    ('=', _('no effect')),
+DIRECTION_CHOICES = (
+    ('in', _('input')),
+    ('out', _('output')),
 )
 
 class ResourceRelationship(models.Model):
     name = models.CharField(_('name'), max_length=32)
     inverse_name = models.CharField(_('inverse name'), max_length=40, blank=True)
-    resource_effect = models.CharField(_('resource effect'), 
-        max_length=12, choices=RESOURCE_EFFECT_CHOICES)
+    direction = models.CharField(_('direction'), 
+        max_length=12, choices=DIRECTION_CHOICES, default='in')
 
     class Meta:
         ordering = ('name', )
@@ -371,7 +362,7 @@ class ResourceRelationship(models.Model):
             return self.name
 
     def infer_label(self):
-        if self.resource_effect == "+":
+        if self.direction == "out":
             return self.inverse_name
         else:
             return self.name
@@ -417,13 +408,13 @@ class AgentResourceType(models.Model):
         return "Source"
 
     def xbill_child_object(self):
-        if self.relationship.resource_effect == '+':
+        if self.relationship.direction == 'out':
             return self.agent
         else:
             return self.resource_type
 
     def xbill_parent_object(self):
-        if self.relationship.resource_effect == '+':
+        if self.relationship.direction == 'out':
             return self.resource_type
         else:
             return self.agent
@@ -466,14 +457,14 @@ class ProcessType(models.Model):
         return "blue"
 
     def produced_resource_type_relationships(self):
-        return self.resource_types.filter(relationship__resource_effect='+')
+        return self.resource_types.filter(relationship__direction='out')
 
     def produced_resource_types(self):
         return [ptrt.resource_type for ptrt in self.produced_resource_type_relationships()]
 
 
     def consumed_resource_type_relationships(self):
-        return self.resource_types.exclude(relationship__resource_effect='+')
+        return self.resource_types.filter(relationship__direction='in')
 
     def consumed_resource_types(self):
         return [ptrt.resource_type for ptrt in self.consumed_resource_type_relationships()]
@@ -514,7 +505,7 @@ class ProcessTypeResourceType(models.Model):
         return self.relationship.inverse_label()
 
     def xbill_label(self):
-        if self.relationship.resource_effect == "+":
+        if self.relationship.direction == 'out':
             return self.inverse_label()
         else:
            abbrev = ""
@@ -523,19 +514,19 @@ class ProcessTypeResourceType(models.Model):
            return " ".join([self.relationship.name, str(self.quantity), abbrev])
 
     def xbill_explanation(self):
-        if self.relationship.resource_effect == "+":
+        if self.relationship.direction == 'out':
             return "Process Type"
         else:
             return "Input"
 
     def xbill_child_object(self):
-        if self.relationship.resource_effect == "+":
+        if self.relationship.direction == 'out':
             return self.process_type
         else:
             return self.resource_type
 
     def xbill_parent_object(self):
-        if self.relationship.resource_effect == "+":
+        if self.relationship.direction == 'out':
             return self.resource_type
         else:
             return self.process_type
@@ -636,6 +627,13 @@ class Process(models.Model):
     def incoming_commitments(self):
         return self.commitments.filter(to_agent__id=self.owner.id)
 
+
+RESOURCE_EFFECT_CHOICES = (
+    ('+', _('increase')),
+    ('-', _('decrease')),
+    ('x', _('transfer')), #means - for from_agent, + for to_agent
+    ('=', _('no effect')),
+)
 
 class EventType(models.Model):
     name = models.CharField(_('name'), max_length=128)
