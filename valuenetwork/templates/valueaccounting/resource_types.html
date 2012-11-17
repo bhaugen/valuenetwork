@@ -27,7 +27,7 @@ li {
     <div class="container">
         {% include "_messages.html" %}
 	<div class="row-fluid">
-		<div class="span8">
+		<div class="span10">
 		<h1>
 			{% trans "Resource Types" %}
 
@@ -70,8 +70,17 @@ li {
 			{% endfor %}
 		</ul>
 		</div>
-		<div class="span4">
+		<div class="span2" style="background: lightgrey; padding: 1em;" >
 			<h4>Filter by Category</h4>
+			<form id="category-form" action="." method="POST">
+				{% csrf_token %}
+				<p><input type="checkbox" class="category" id="all" name="all" value="all" {% if select_all %}checked="yes"{% endif %} /> All</p>
+				{% for cat in categories %}
+				<p><input type="checkbox" class="category" id="{{ cat }}" name="{{ cat }}" value="{{ cat }}" /> {{ cat }}</p>
+				{% endfor %}
+				<input type='hidden' id='categories' name='categories' value='' />
+				<input type="submit" name="submit" value="Filter" />
+			</form>
 		</div>
 	</div>
     </div>
@@ -84,6 +93,46 @@ li {
     <script type="text/javascript">
 
 	$(document).ready(function(){
+
+		var selectedCats = "{{ selected_cats }}";
+
+		$('.category').each(function()
+		{
+			var cat = $(this)[0];
+            if (selectedCats.indexOf(cat.name) > -1)
+			{
+				$(this).prop('checked', true);
+			}
+		});
+
+		$('.category').click(function() 
+		{
+			var checkedCats = [];
+			var checkedBox = $(this)[0];
+			var allBox = $('#all')[0];
+			if (checkedBox == allBox)
+			{
+				$('.category').each(function()
+				{
+		            $(this).prop('checked', false);
+				});
+				$('#all').prop('checked', true);
+				checkedCats.push('all');
+			}
+			else
+			{
+				$('#all').prop('checked', false);
+				$('.category').each(function()
+				{
+					var cat = $(this)[0];
+		            if (cat.checked)
+					{
+						checkedCats.push(cat.value);
+					}
+				});
+			}
+			$('#categories').prop('value', checkedCats);
+		});
 
 		$('.resource-create-form').validate(
 		{

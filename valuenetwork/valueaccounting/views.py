@@ -37,8 +37,24 @@ def resource_types(request):
     roots = EconomicResourceType.objects.exclude(category=cat)
     #roots = EconomicResourceType.objects.all()
     create_form = EconomicResourceTypeForm()
+    categories = Category.objects.all()
+    select_all = True
+    selected_cats = "all"
+    if request.method == "POST":
+        selected_cats = request.POST["categories"]
+        cats = selected_cats.split(",")
+        if cats[0] == "all":
+            select_all = True
+            roots = EconomicResourceType.objects.all()
+        else:
+            select_all = False
+            roots = EconomicResourceType.objects.filter(category__name__in=cats)
+        #import pdb; pdb.set_trace()
     return render_to_response("valueaccounting/resource_types.html", {
         "roots": roots,
+        "categories": categories,
+        "select_all": select_all,
+        "selected_cats": selected_cats,
         "create_form": create_form,
         "photo_size": (128, 128),
     }, context_instance=RequestContext(request))
