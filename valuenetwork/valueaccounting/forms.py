@@ -12,7 +12,7 @@ class EconomicResourceTypeForm(forms.ModelForm):
     
     class Meta:
         model = EconomicResourceType
-        exclude = ('parent',)
+        exclude = ('parent', 'created_by', 'changed_by')
 
 
 class EconomicResourceTypeWithPopupForm(forms.ModelForm):

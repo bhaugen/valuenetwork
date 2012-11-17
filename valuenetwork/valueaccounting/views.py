@@ -252,7 +252,9 @@ def change_resource_type(request, resource_type_id):
         form = EconomicResourceTypeForm(request.POST, request.FILES, instance=rt)
         if form.is_valid():
             data = form.cleaned_data
-            form.save()
+            rt = form.save(commit=False)
+            rt.changed_by=request.user
+            rt.save()
             next = request.POST.get("next")
             if next:
                 return HttpResponseRedirect(next)
@@ -267,7 +269,9 @@ def create_resource_type(request):
         form = EconomicResourceTypeForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data
-            form.save()
+            rt = form.save(commit=False)
+            rt.created_by=request.user
+            rt.save()
             next = request.POST.get("next")
             if next:
                 return HttpResponseRedirect(next)

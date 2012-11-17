@@ -26,7 +26,8 @@ li {
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div>
+	<div class="row-fluid">
+		<div class="span8">
 		<h1>
 			{% trans "Resource Types" %}
 
@@ -68,7 +69,10 @@ li {
 
 			{% endfor %}
 		</ul>
-
+		</div>
+		<div class="span4">
+			<h4>Filter by Category</h4>
+		</div>
 	</div>
     </div>
 {% endblock %}
