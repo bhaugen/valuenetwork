@@ -205,6 +205,9 @@ ul {
 
 						</div>
 
+						<div style="display: inline;" >
+							<a href="{% url delete_process_type_confirmation process_type_id=xbill_object.id resource_type_id=resource_type.id %}" role="button" class="btn btn-warning" >Delete</a>
+						</div>
 
 					{% endif %}
 
@@ -235,6 +238,10 @@ ul {
 
 						</div>
 
+						<div style="display: inline;" >
+							<a href="{% url delete_process_input process_input_id=xbill_node.id resource_type_id=resource_type.id %}" role="button" class="btn btn-warning" >Delete</a>
+						</div>
+
 					{% endif %}
 
 
@@ -262,6 +269,10 @@ ul {
 								</form>
 						  </div>
 
+						</div>
+
+						<div style="display: inline;" >
+							<a href="{% url delete_source source_id=xbill_node.id resource_type_id=resource_type.id %}" role="button" class="btn btn-warning" >Delete</a>
 						</div>
 
 					{% endif %}

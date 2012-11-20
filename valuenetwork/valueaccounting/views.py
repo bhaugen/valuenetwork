@@ -279,6 +279,86 @@ def change_resource_type(request, resource_type_id):
                     % ('accounting/edit-xbomfg', resource_type_id))
 
 @login_required
+def delete_resource_type_confirmation(request, resource_type_id):
+    rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    side_effects = False
+    if rt.process_types.all():
+        side_effects = True
+        return render_to_response('valueaccounting/resource_type_delete_confirmation.html', {
+            "resource_type": rt,
+            "side_effects": side_effects,
+            }, context_instance=RequestContext(request))
+    else:
+        rt.delete()
+        return HttpResponseRedirect('/%s/'
+            % ('accounting/resources'))
+
+@login_required
+def delete_resource_type(request, resource_type_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+        pts = rt.producing_process_types()
+        rt.delete()
+        for pt in pts:
+            pt.delete()
+        next = request.POST.get("next")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect('/%s/'
+                % ('accounting/resources'))
+
+@login_required
+def delete_process_input(request, 
+        process_input_id, resource_type_id):
+    pi = get_object_or_404(ProcessTypeResourceType, pk=process_input_id)
+    pi.delete()
+    return HttpResponseRedirect('/%s/%s/'
+        % ('accounting/edit-xbomfg', resource_type_id))
+
+
+@login_required
+def delete_source(request, 
+        source_id, resource_type_id):
+    s = get_object_or_404(AgentResourceType, pk=source_id)
+    #import pdb; pdb.set_trace()
+    s.delete()
+    return HttpResponseRedirect('/%s/%s/'
+        % ('accounting/edit-xbomfg', resource_type_id))
+
+@login_required
+def delete_process_type_confirmation(request, 
+        process_type_id, resource_type_id):
+    pt = get_object_or_404(ProcessType, pk=process_type_id)
+    side_effects = False
+    if pt.resource_types.all():
+        side_effects = True
+        return render_to_response('valueaccounting/process_type_delete_confirmation.html', {
+            "process_type": pt,
+            "resource_type_id": resource_type_id,
+            "side_effects": side_effects,
+            }, context_instance=RequestContext(request))
+    else:
+        pt.delete()
+        return HttpResponseRedirect('/%s/%s/'
+            % ('accounting/edit-xbomfg', resource_type_id))
+
+
+@login_required
+def delete_process_type(request, process_type_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        pt = get_object_or_404(ProcessType, pk=process_type_id)
+        pt.delete()
+        next = request.POST.get("next")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect('/%s/'
+                % ('accounting/resources'))
+
+@login_required
 def create_resource_type(request):
     #import pdb; pdb.set_trace()
     if request.method == "POST":

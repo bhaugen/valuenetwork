@@ -1,0 +1,40 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Confirm deletion of " %}{{ process_type }}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<legend>{% trans "Are you sure you want to delete " %}{{ process_type }}?</legend>
+		
+		{% if side_effects %}
+		<h3>{% trans "The following objects will be also deleted" %}:</h3>
+
+			<ul>
+				{% for rt in process_type.resource_types.all %}
+					<li>{{ rt }}</li>
+				{% endfor %}
+			</ul>
+
+		{% endif %}
+
+		<div>
+	<form style="display: inline;" action="{% url delete_process_type process_type_id=process_type.id %}" method="POST">
+		{% csrf_token %}
+    		<input type="submit" value="{% trans 'Delete' %}" class="btn btn-warning" />
+			<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type_id %}" />
+	</form>
+	<form style="display: inline;" action="{% url edit_extended_bill resource_type_id=resource_type_id %}" method="GET">
+    		<input type="submit" value="{% trans 'Cancel' %}" class="btn btn-info" />
+    </form>
+
+	</div>
+
+	</div>
+    </div>
+{% endblock %}

@@ -33,6 +33,10 @@
 
 			</div>
 
+			<div style="display: inline;" >
+				<a href="{% url delete_resource_type_confirmation resource_type_id=resource_type.id %}" role="button" class="btn btn-warning" >Delete</a>
+			</div>
+
 		{% endif %}
 
 		{% if resource_type.producing_process_type_relationships %}

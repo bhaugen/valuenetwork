@@ -1,0 +1,52 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Confirm deletion of " %}{{ resource_type }}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<legend>{% trans "Are you sure you want to delete " %}{{ resource_type }}?</legend>
+		
+		{% if side_effects %}
+		<h3>{% trans "The following objects will be also deleted" %}:</h3>
+
+			<ul>
+				{% for ptrt in resource_type.consuming_process_type_relationships %}
+					<li><b>{{ resource_type }}</b> will be removed as an input to the Process Type <b>{{ ptrt.process_type }}</b></li>
+				{% endfor %}
+				{% for pt in resource_type.producing_process_types %}
+					<li>The Process Type <b>{{ pt }}</b> for making <b>{{ resource_type }}</b> will also be deleted
+					{% if pt.resource_types.all %}
+						along with all of its input and output relationships:</li>
+						<ul>
+							{% for rt in pt.resource_types.all %}
+								<li>{{ rt }}</li>
+							{% endfor %}
+						</ul>
+					{% else %}
+						</li>
+					{% endif %}
+				{% endfor %}
+			</ul>
+
+		{% endif %}
+
+		<div>
+	<form style="display: inline;" action="{% url delete_resource_type resource_type_id=resource_type.id %}" method="POST">
+		{% csrf_token %}
+    		<input type="submit" value="{% trans 'Delete' %}" class="btn btn-warning" />
+	</form>
+	<form style="display: inline;" action="{% url resource_types %}" method="GET">
+    		<input type="submit" value="{% trans 'Cancel' %}" class="btn btn-info" />
+    </form>
+
+	</div>
+
+	</div>
+    </div>
+{% endblock %}
