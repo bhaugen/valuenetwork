@@ -70,7 +70,7 @@ li {
 			{% endfor %}
 		</ul>
 		</div>
-		<div class="span2" style="background: lightgrey; padding: 1em;" >
+		<div class="span2 filter">
 			<h4>Filter by Category</h4>
 			<form id="category-form" action="." method="POST">
 				{% csrf_token %}
@@ -79,7 +79,7 @@ li {
 				<p><input type="checkbox" class="category" id="{{ cat }}" name="{{ cat }}" value="{{ cat }}" /> {{ cat }}</p>
 				{% endfor %}
 				<input type='hidden' id='categories' name='categories' value='' />
-				<input type="submit" name="submit" value="Filter" />
+				<input type="submit" name="submit" class="btn btn-info" value="Filter" />
 			</form>
 		</div>
 	</div>
