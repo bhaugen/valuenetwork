@@ -44,5 +44,8 @@ urlpatterns = patterns("",
     url(r"^delete-source/(?P<source_id>\d+)/(?P<resource_type_id>\d+)/$", 
         'valuenetwork.valueaccounting.views.delete_source', 
         name="delete_source"),
+    url(r"^json-resourcetype-unit/(?P<resource_type_id>\d+)/$", 'valuenetwork.valueaccounting.views.json_resource_type_unit', 
+        name="json_resource_type_unit"),
+
 
 )

@@ -357,7 +357,7 @@ ul {
 						  <div class="modal-body">
 								<form class="input-form" action="{% url create_process_type_input process_type_id=xbill_object.id %}" method="POST" >
 									{% csrf_token %}
-									{{ input_form|as_bootstrap }}
+									{{ xbill_object.xbill_input_form|as_bootstrap }}
 									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 								  <div class="modal-footer">
 									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
@@ -400,6 +400,21 @@ ul {
     <script type="text/javascript">
 
 	$(document).ready(function(){
+
+		$(".resource-type-selector").change(getUnit);
+
+		function getUnit(event)
+		{
+			var prefix = event.target.id.split('-')[0];
+			var resourceId = event.target.value;
+			var unitName = "#" + prefix + "-unit_of_quantity";
+			var jsonUrl = encodeURI("/accounting/json-resourcetype-unit/" + resourceId + "/");
+			$.get(jsonUrl,
+				function(data){
+					var unit = eval(data)[0].fields.unit;
+                    $(unitName).val(unit);
+				});
+		}
 
 		$('.resource-change-form').each( function(){
 			var form = $(this);

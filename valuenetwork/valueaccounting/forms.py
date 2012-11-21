@@ -64,7 +64,9 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
     resource_type = forms.ModelChoiceField(
         queryset=EconomicResourceType.objects.all(), 
         empty_label=None, 
-        widget=SelectWithPopUp(model=EconomicResourceType))
+        widget=SelectWithPopUp(
+            model=EconomicResourceType,
+            attrs={'class': 'resource-type-selector'}))
     relationship = forms.ModelChoiceField(
         queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 
@@ -72,15 +74,6 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
     unit_of_quantity = forms.ModelChoiceField(
         queryset=Unit.objects.all(),  
         widget=SelectWithPopUp(model=Unit))
-
-    #def __init__(self, *args, **kwargs):
-    #    super(ProcessTypeResourceTypeForm, self).__init__(*args, **kwargs)
-        #self.fields["resource_type"].choices = [
-        #    (res.id, res.name) for res in EconomicResourceType.objects.all()
-        #]
-        #self.fields["relationship"].choices = [
-        #    (rel.id, rel.name) for rel in ResourceRelationship.objects.exclude(direction='out')
-        #]
 
     class Meta:
         model = ProcessTypeResourceType
@@ -91,7 +84,9 @@ class LaborInputForm(forms.ModelForm):
     resource_type = forms.ModelChoiceField(
         queryset=EconomicResourceType.objects.types_of_work(), 
         empty_label=None, 
-        widget=SelectWithPopUp(model=EconomicResourceType))
+        widget=SelectWithPopUp(
+            model=EconomicResourceType,
+            attrs={'class': 'resource-type-selector'}))
     relationship = forms.ModelChoiceField(
         queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 

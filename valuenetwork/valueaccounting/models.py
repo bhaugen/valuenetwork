@@ -422,9 +422,12 @@ class AgentResourceType(models.Model):
     def node_id(self):
         return "-".join(["AgentResource", str(self.id)])
 
+    def xbill_change_prefix(self):
+        return "".join(["AR", str(self.id)])
+
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import AgentResourceTypeForm
-        return AgentResourceTypeForm(instance=self)
+        return AgentResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
 
 
 class ProcessType(models.Model):
@@ -478,9 +481,19 @@ class ProcessType(models.Model):
     def xbill_explanation(self):
         return "Process Type"
 
+    def xbill_change_prefix(self):
+        return "".join(["PT", str(self.id)])
+
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import ChangeProcessTypeForm
-        return ChangeProcessTypeForm(instance=self)
+        return ChangeProcessTypeForm(instance=self, prefix=self.xbill_change_prefix())
+
+    def xbill_input_prefix(self):
+        return "".join(["PTINPUT", str(self.id)])
+
+    def xbill_input_form(self):
+        from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm
+        return ProcessTypeResourceTypeForm(prefix=self.xbill_input_prefix())
 
 
 class ProcessTypeResourceType(models.Model):
@@ -534,13 +547,16 @@ class ProcessTypeResourceType(models.Model):
     def node_id(self):
         return "-".join(["ProcessResource", str(self.id)])
 
+    def xbill_change_prefix(self):
+        return "".join(["PTRT", str(self.id)])
+
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm, LaborInputForm
         #todo: hack based on user-changeable string
         if self.resource_type.category.name == "Type of work":
-            return LaborInputForm(instance=self)
+            return LaborInputForm(instance=self, prefix=self.xbill_change_prefix())
         else:
-            return ProcessTypeResourceTypeForm(instance=self)
+            return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
 
 
 class Project(models.Model):

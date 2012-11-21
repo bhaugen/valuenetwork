@@ -18,6 +18,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import simplejson
 from django.forms.models import formset_factory, modelformset_factory
+from django.forms import ValidationError
 from django.utils import simplejson
 
 from valuenetwork.valueaccounting.models import *
@@ -247,7 +248,7 @@ def edit_extended_bill(request, resource_type_id):
     process_form = XbillProcessTypeForm()
     change_process_form = ChangeProcessTypeForm()
     source_form = AgentResourceTypeForm()
-    input_form = ProcessTypeResourceTypeForm()
+    #input_form = ProcessTypeResourceTypeForm()
     return render_to_response("valueaccounting/edit_xbill.html", {
         "resource_type": rt,
         "nodes": nodes,
@@ -257,7 +258,7 @@ def edit_extended_bill(request, resource_type_id):
         "process_form": process_form,
         "change_process_form": change_process_form,
         "source_form": source_form,
-        "input_form": input_form,
+        #"input_form": input_form,
     }, context_instance=RequestContext(request))
 
 @login_required
@@ -375,7 +376,7 @@ def create_resource_type(request):
                 return HttpResponseRedirect('/%s/'
                     % ('accounting/resources'))
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 
 @login_required
@@ -383,7 +384,8 @@ def create_process_type_input(request, process_type_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         pt = get_object_or_404(ProcessType, pk=process_type_id)
-        form = ProcessTypeResourceTypeForm(request.POST)
+        prefix = pt.xbill_input_prefix()
+        form = ProcessTypeResourceTypeForm(request.POST, prefix=prefix)
         if form.is_valid():
             ptrt = form.save(commit=False)
             ptrt.process_type=pt
@@ -391,32 +393,37 @@ def create_process_type_input(request, process_type_id):
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 @login_required
 def change_process_type_input(request, input_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         ptrt = get_object_or_404(ProcessTypeResourceType, pk=input_id)
-        form = ProcessTypeResourceTypeForm(data=request.POST, instance=ptrt)
+        prefix = ptrt.xbill_change_prefix()
+        form = ProcessTypeResourceTypeForm(
+            data=request.POST, 
+            instance=ptrt,
+            prefix=prefix)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 @login_required
 def change_agent_resource_type(request, agent_resource_type_id):
     if request.method == "POST":
         art = get_object_or_404(AgentResourceType, pk=agent_resource_type_id)
-        form = AgentResourceTypeForm(data=request.POST, instance=art)
+        prefix = art.xbill_change_prefix()
+        form = AgentResourceTypeForm(data=request.POST, instance=art, prefix=prefix)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 @login_required
 def create_agent_resource_type(request, resource_type_id):
@@ -431,20 +438,21 @@ def create_agent_resource_type(request, resource_type_id):
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 @login_required
 def change_process_type(request, process_type_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         pt = get_object_or_404(ProcessType, pk=process_type_id)
-        form = ChangeProcessTypeForm(request.POST, instance=pt)
+        prefix = pt.xbill_change_prefix()
+        form = ChangeProcessTypeForm(request.POST, instance=pt, prefix=prefix)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 @login_required
 def create_process_type_for_resource_type(request, resource_type_id):
@@ -471,7 +479,7 @@ def create_process_type_for_resource_type(request, resource_type_id):
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:
-            return HttpResponse(status=500)
+            raise ValidationError(form.errors)
 
 def network(request, resource_type_id):
     #import pdb; pdb.set_trace()
@@ -501,3 +509,10 @@ def json_timeline(request):
         backshedule_events(process, events)
     data = simplejson.dumps(events, ensure_ascii=False)
     return HttpResponse(data, mimetype="text/json-comment-filtered")
+
+def json_resource_type_unit(request, resource_type_id):
+    data = serializers.serialize("json", EconomicResourceType.objects.filter(id=resource_type_id), fields=('unit',))
+    return HttpResponse(data, mimetype="text/json-comment-filtered")
+
+
+
