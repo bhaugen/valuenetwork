@@ -437,7 +437,8 @@ class ProcessType(models.Model):
     description = models.TextField(_('description'), blank=True, null=True)
     url = models.CharField(_('url'), max_length=255, blank=True)
     estimated_duration = models.IntegerField(_('estimated duration'), 
-        default=0, help_text=_("in minutes"))
+        default=0, 
+        help_text=_("in minutes, e.g. 3 hours = 180"))
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:
