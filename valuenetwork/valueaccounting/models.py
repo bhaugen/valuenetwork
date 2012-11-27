@@ -560,6 +560,8 @@ class ProcessTypeResourceType(models.Model):
             return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
 
 
+
+
 class Project(models.Model):
     name = models.CharField(_('name'), max_length=128) 
     parent = models.ForeignKey('self', blank=True, null=True, 
@@ -607,6 +609,7 @@ class Process(models.Model):
     parent = models.ForeignKey('self', blank=True, null=True, 
         verbose_name=_('parent'), related_name='sub_processes', editable=False)
     process_type = models.ForeignKey(ProcessType,
+        blank=True, null=True,
         verbose_name=_('process type'), related_name='processes')
     project = models.ForeignKey(Project,
         blank=True, null=True,
