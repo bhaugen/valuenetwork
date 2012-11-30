@@ -706,7 +706,10 @@ class Feature(models.Model):
         return "Feature"
 
     def xbill_label(self):
-        return ""
+        abbrev = ""
+        if self.unit_of_quantity:
+           abbrev = self.unit_of_quantity.abbrev
+        return " ".join([str(self.quantity), abbrev])
 
     def xbill_category(self):
         return Category(name="features")

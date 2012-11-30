@@ -460,7 +460,7 @@ def create_process_type_feature(request, process_type_id):
 
 @login_required
 def create_options_for_feature(request, feature_id):
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     if request.method == "POST":
         ft = get_object_or_404(Feature, pk=feature_id)
         form = OptionsForm(request.POST)
