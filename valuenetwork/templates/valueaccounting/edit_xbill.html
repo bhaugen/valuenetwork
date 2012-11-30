@@ -47,9 +47,18 @@ ul {
 	background-color: lightyellow;
 }
 
+.feature {
+	background-color: lightyellow;
+}
+
 .process-type {
 	background-color: beige;
 }
+
+.option {
+	background-color: beige;
+}
+
 
 .description {
 	font-style: italic;
@@ -283,9 +292,10 @@ ul {
 
 
 					{% if xb_type == "economic-resource-type" %}
+						<div>
 						{% comment %} todo: type of work is a hack based on a user-defined name {% endcomment %}
 						{% if not xbill_object.category.name = "Type of work" %}
-							<div>
+							<div style="display: inline;" >
 								<a href="#processForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">
 									{% if xbill_object.producing_process_type_relationships %}
 										Add another process type to create {{ xbill_object }}
@@ -318,7 +328,7 @@ ul {
 							</div>
 						{% endif %}
 
-						<div>
+						<div style="display: inline;" >
 							<a href="#sourceForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a source for {{ xbill_object }}</a>							
 						</div>
 
@@ -341,11 +351,11 @@ ul {
 						  </div>
 
 						</div>
-
+						</div>
 						{% endif %}
 
 						{% if xb_type == "process-type" %}
-						<div>
+						<div style="display: inline;" >
 							<a href="#inputForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add an input to {{ xbill_object }}</a>
 						</div>
 
@@ -368,6 +378,85 @@ ul {
 						  </div>
 
 						</div>
+
+						<div style="display: inline;" >
+							<a href="#featureForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Add a feature to {{ xbill_object }}</a>
+						</div>
+
+						<div class="modal hide fade" id="featureForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="feature-label" aria-hidden="true">
+						  <div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+							<h3 id="feature-label">Add a feature to {{ xbill_object }}</h3>
+						  </div>
+						  <div class="modal-body">
+								<form class="feature-form" action="{% url create_process_type_feature process_type_id=xbill_object.id %}" method="POST" >
+									{% csrf_token %}
+									{{ feature_form|as_bootstrap }}
+									<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
+								  <div class="modal-footer">
+									<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+									<button class="btn btn-primary">Save changes</button>
+								  </div>
+
+								</form>
+						  </div>
+
+						</div>
+
+						{% endif %}
+
+						{% if xb_type == "feature" %}
+							{% if xbill_object.options.all %}
+								<div>
+									<a href="#optionChangeForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Change options for {{ xbill_object }}</a>
+								</div>
+
+								<div class="modal hide fade" id="optionChangeForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="options-change-label" aria-hidden="true">
+								  <div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+									<h3 id="options-change-label">Change options for {{ xbill_object }}</h3>
+								  </div>
+								  <div class="modal-body">
+										<form class="options-change-form" action="{% url change_options_for_feature feature_id=xbill_object.id %}" method="POST" >
+											{% csrf_token %}
+											{{ xbill_object.options_change_form|as_bootstrap }}
+											<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
+										  <div class="modal-footer">
+											<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+											<button class="btn btn-primary">Save changes</button>
+										  </div>
+
+										</form>
+								  </div>
+
+								</div>
+
+							{% else %}
+								<div>
+									<a href="#optionsForm{{ xbill_object.node_id }}" role="button" class="btn btn-info" data-toggle="modal">Select options for {{ xbill_object }}</a>
+								</div>
+
+								<div class="modal hide fade" id="optionsForm{{ xbill_object.node_id }}" tabindex="-1" role="dialog" aria-labelledby="options-label" aria-hidden="true">
+								  <div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+									<h3 id="options-label">Selection options for {{ xbill_object }}</h3>
+								  </div>
+								  <div class="modal-body">
+										<form class="options-form" action="{% url create_options_for_feature feature_id=xbill_object.id %}" method="POST" >
+											{% csrf_token %}
+											{{ options_form|as_bootstrap }}
+											<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
+										  <div class="modal-footer">
+											<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+											<button class="btn btn-primary">Save changes</button>
+										  </div>
+
+										</form>
+								  </div>
+
+								</div>
+							{% endif %}
+
 
 						{% endif %}
 

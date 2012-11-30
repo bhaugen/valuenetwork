@@ -283,7 +283,10 @@ class EconomicResourceType(models.Model):
         return [art.agent for art in arts]
 
     def xbill_parents(self):
-        return self.consuming_process_type_relationships()
+        answer = list(self.consuming_process_type_relationships())
+        answer.extend(list(self.options.all()))
+        #answer.append(self)
+        return answer
 
     def xbill_children(self):
         answer = []
@@ -297,6 +300,15 @@ class EconomicResourceType(models.Model):
 
     def xbill_parent_object(self):
         return self
+
+    def xbill_explanation(self):
+        return "Resource Type"
+
+    def xbill_label(self):
+        return ""
+
+    def xbill_category(self):
+        return self.category
 
     def change_form(self):
         from valuenetwork.valueaccounting.forms import EconomicResourceTypeForm
@@ -413,6 +425,9 @@ class AgentResourceType(models.Model):
         else:
             return self.resource_type
 
+    def xbill_category(self):
+        return Category(name="sources")
+
     def xbill_parent_object(self):
         if self.relationship.direction == 'out':
             return self.resource_type
@@ -477,7 +492,9 @@ class ProcessType(models.Model):
         return self.produced_resource_type_relationships()
 
     def xbill_children(self):
-        return self.consumed_resource_type_relationships()
+        kids = list(self.consumed_resource_type_relationships())
+        kids.extend(self.features.all())
+        return kids
 
     def xbill_explanation(self):
         return "Process Type"
@@ -542,8 +559,21 @@ class ProcessTypeResourceType(models.Model):
     def xbill_parent_object(self):
         if self.relationship.direction == 'out':
             return self.resource_type
+            #if self.resource_type.category.name == 'option':
+            #    return self
+            #else:
+            #    return self.resource_type
         else:
             return self.process_type
+
+    def xbill_parents(self):
+        return [self.resource_type, self]
+
+    def xbill_category(self):
+        if self.relationship.direction == 'out':
+            return Category(name="processes")
+        else:
+            return self.resource_type.category
 
     def node_id(self):
         return "-".join(["ProcessResource", str(self.id)])
@@ -558,8 +588,6 @@ class ProcessTypeResourceType(models.Model):
             return LaborInputForm(instance=self, prefix=self.xbill_change_prefix())
         else:
             return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
-
-
 
 
 class Project(models.Model):
@@ -646,6 +674,93 @@ class Process(models.Model):
 
     def incoming_commitments(self):
         return self.commitments.filter(to_agent__id=self.owner.id)
+
+
+class Feature(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+    product = models.ForeignKey(EconomicResourceType, 
+        related_name="features", verbose_name=_('product'))
+    process_type = models.ForeignKey(ProcessType,
+        blank=True, null=True,
+        verbose_name=_('process type'), related_name='features')
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
+    unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
+        verbose_name=_('unit'), related_name="feature_units")
+
+    class Meta:
+        ordering = ('name',)
+
+    def __unicode__(self):
+        return " ".join([self.name, "Feature for", self.product.name])
+
+    def xbill_child_object(self):
+        return self
+
+    def xbill_parent_object(self):
+        return self.process_type
+
+    def xbill_children(self):
+        return self.options.all()
+
+    def xbill_explanation(self):
+        return "Feature"
+
+    def xbill_label(self):
+        return ""
+
+    def xbill_category(self):
+        return Category(name="features")
+
+    def node_id(self):
+        return "-".join(["Feature", str(self.id)])
+
+    def xbill_parents(self):
+        return [self.process_type, self]
+
+    def options_change_form(self):
+        from valuenetwork.valueaccounting.forms import OptionsForm
+        #option_ids = self.options.values_list('id', flat=True)
+        option_ids = self.options.values_list('component__id', flat=True)
+        init = {'options': option_ids,}
+        return OptionsForm(initial=init)
+
+
+class Option(models.Model):
+    feature = models.ForeignKey(Feature, 
+        related_name="options", verbose_name=_('feature'))
+    component = models.ForeignKey(EconomicResourceType, 
+        related_name="options", verbose_name=_('component'))
+
+    class Meta:
+        ordering = ('component',)
+
+    def __unicode__(self):
+        return " ".join([self.component.name, "option for", self.feature.name])
+
+    def xbill_child_object(self):
+        return self.component
+
+    def xbill_parent_object(self):
+        return self.feature
+
+    def xbill_children(self):
+        return self.component.xbill_children()
+
+    def xbill_explanation(self):
+        return "Option"
+
+    def xbill_label(self):
+        return ""
+
+    def xbill_category(self):
+        return Category(name="features")
+
+    def node_id(self):
+        return "-".join(["Option", str(self.id)])
+
+    def xbill_parents(self):
+        return [self.feature, self]
+
 
 
 RESOURCE_EFFECT_CHOICES = (

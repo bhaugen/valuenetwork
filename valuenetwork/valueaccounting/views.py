@@ -232,10 +232,49 @@ def value_equation(request, project_id):
 def extended_bill(request, resource_type_id):
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
     #import pdb; pdb.set_trace()
-    nodes = generate_xbill(rt)
+    select_all = True
+    categories = Category.objects.all()
+    if request.method == "POST":
+        nodes = generate_xbill(rt)
+        depth = 0
+        for node in nodes:
+            depth = max(depth, node.depth)
+        selected_cats = request.POST["categories"]
+        cats = selected_cats.split(",")
+        selected_depth = int(request.POST['depth'])
+        #import pdb; pdb.set_trace()
+        if cats[0]:
+            if cats[0] == "all":
+                select_all = True
+            else:
+                select_all = False
+        selected_nodes = []
+        for node in nodes:
+            if node.depth <= selected_depth:
+                if select_all:
+                    selected_nodes.append(node)
+                else:
+                    cat = node.category()
+                    if cat.name in cats:
+                        selected_nodes.append(node)
+
+        nodes = selected_nodes
+    else:
+        nodes = generate_xbill(rt)
+        depth = 0
+        for node in nodes:
+            depth = max(depth, node.depth)
+        selected_depth = depth
+        select_all = True
+        selected_cats = "all"
     return render_to_response("valueaccounting/extended_bill.html", {
         "resource_type": rt,
         "nodes": nodes,
+        "depth": depth,
+        "selected_depth": selected_depth,
+        "categories": categories,
+        "select_all": select_all,
+        "selected_cats": selected_cats,
         "photo_size": (128, 128),
         "big_photo_size": (200, 200),
     }, context_instance=RequestContext(request))
@@ -243,12 +282,14 @@ def extended_bill(request, resource_type_id):
 @login_required
 def edit_extended_bill(request, resource_type_id):
     rt = get_object_or_404(EconomicResourceType, pk=resource_type_id)
+    #import pdb; pdb.set_trace()
     nodes = generate_xbill(rt)
     resource_type_form = EconomicResourceTypeForm(instance=rt)
     process_form = XbillProcessTypeForm()
     change_process_form = ChangeProcessTypeForm()
     source_form = AgentResourceTypeForm()
-    #input_form = ProcessTypeResourceTypeForm()
+    feature_form = FeatureForm()
+    options_form = OptionsForm()
     return render_to_response("valueaccounting/edit_xbill.html", {
         "resource_type": rt,
         "nodes": nodes,
@@ -258,7 +299,8 @@ def edit_extended_bill(request, resource_type_id):
         "process_form": process_form,
         "change_process_form": change_process_form,
         "source_form": source_form,
-        #"input_form": input_form,
+        "feature_form": feature_form,
+        "options_form": options_form,
     }, context_instance=RequestContext(request))
 
 @login_required
@@ -390,6 +432,74 @@ def create_process_type_input(request, process_type_id):
             ptrt = form.save(commit=False)
             ptrt.process_type=pt
             ptrt.save()
+            next = request.POST.get("next")
+            return HttpResponseRedirect(next)
+        else:
+            raise ValidationError(form.errors)
+
+
+@login_required
+def create_process_type_feature(request, process_type_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        pt = get_object_or_404(ProcessType, pk=process_type_id)
+        form = FeatureForm(request.POST)
+        if form.is_valid():
+            feature = form.save(commit=False)
+            feature.process_type=pt
+            rts = pt.produced_resource_types()
+            #todo: assuming the feature applies to the first
+            # produced_resource_type
+            if rts:
+                feature.product=rts[0]
+            feature.save()
+            next = request.POST.get("next")
+            return HttpResponseRedirect(next)
+        else:
+            raise ValidationError(form.errors)
+
+@login_required
+def create_options_for_feature(request, feature_id):
+    import pdb; pdb.set_trace()
+    if request.method == "POST":
+        ft = get_object_or_404(Feature, pk=feature_id)
+        form = OptionsForm(request.POST)
+        if form.is_valid():
+            options = eval(form.cleaned_data["options"])
+            for option in options:
+                rt = EconomicResourceType.objects.get(pk=int(option))
+                opt = Option(
+                    feature=ft,
+                    component=rt)
+                opt.save()
+                
+            next = request.POST.get("next")
+            return HttpResponseRedirect(next)
+        else:
+            raise ValidationError(form.errors)
+
+@login_required
+def change_options_for_feature(request, feature_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        ft = get_object_or_404(Feature, pk=feature_id)
+        form = OptionsForm(request.POST)
+        if form.is_valid():
+            selected_options = eval(form.cleaned_data["options"])
+            selected_options = [int(opt) for opt in selected_options]
+            previous_options = ft.options.all()
+            previous_ids = ft.options.values_list('component__id', flat=True)
+            for option in previous_options:
+                if not option.component.id in selected_options:
+                    option.delete()
+            for option in selected_options:
+                if not option in previous_ids:
+                    rt = EconomicResourceType.objects.get(pk=int(option))
+                    opt = Option(
+                        feature=ft,
+                        component=rt)
+                    opt.save()
+                
             next = request.POST.get("next")
             return HttpResponseRedirect(next)
         else:

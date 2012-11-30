@@ -8,6 +8,21 @@ from valuenetwork.tekextensions.widgets import SelectWithPopUp
 from valuenetwork.valueaccounting.models import *
 
 
+class OptionsForm(forms.Form):
+
+    options = forms.CharField(
+        label=_("Options"),
+        required=True,
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(OptionsForm, self).__init__(*args, **kwargs)
+        self.fields["options"].choices = [
+            (rt.id, rt.name) for rt in 
+                EconomicResourceType.objects.filter(category__name="Option")
+        ]
+
 class EconomicResourceTypeForm(forms.ModelForm):
     
     class Meta:
@@ -58,6 +73,12 @@ class ChangeProcessTypeForm(forms.ModelForm):
     class Meta:
         model = ProcessType
         exclude = ('parent',)
+
+class FeatureForm(forms.ModelForm):
+
+    class Meta:
+        model = Feature
+        exclude = ('product', 'process_type')
 
 
 class ProcessTypeResourceTypeForm(forms.ModelForm):

@@ -6,6 +6,7 @@
 {% block head_title %}{% trans "Recipe for " %} {{ resource_type }}{% endblock %}
 
 {% block extra_head %}
+ <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
 <style>
 h4 {
 	margin-top: 1em; 
@@ -38,7 +39,15 @@ ul {
 	background-color: lightyellow;
 }
 
+.feature {
+	background-color: lightyellow;
+}
+
 .process-type {
+	background-color: beige;
+}
+
+.option {
 	background-color: beige;
 }
 
@@ -46,6 +55,17 @@ ul {
 	font-style: italic;
 	font-weight: normal;
 }
+
+.ui-spinner {
+	display: inline;
+}
+
+.ui-spinner-input {
+	width: 16px;
+	font-size: 80%;
+}
+
+
 </style>
 {% endblock %}
 
@@ -54,55 +74,167 @@ ul {
 {% block body_base %}
     <div class="container">
         {% include "_messages.html" %}
-	<div>
-		<h1>{% trans "Recipe for " %} {{ resource_type }}</h1>
+	<div class="row-fluid">
+		<div class="span10">
+			<h1>{% trans "Recipe for " %} {{ resource_type }}</h1>
 
-        <h4>
-			{% if resource_type.url %}
-				<a href="{{ resource_type.url }}" target="blank">{{ resource_type }}</a>
-			{% else %}
-				{{ resource_type }}
-			{% endif %}
-			{% if resource_type.photo %}
-				<img src="{% thumbnail resource_type.photo big_photo_size %}" />
-			{% endif %}
-		</h4>
-		{% if resource_type.description %}
-			<div class="description" >{{ resource_type.description|urlize|linebreaks }}</div>
-		{% endif %}
-
-		{% for node in nodes %}
-			{% if not node.open and not node.close %}
-				</li>
-			{% endif %}
-    
-			{% if node.open %}
-    				<ul class="xb" >
-			{% endif %}
-
-			<li  class="xb  {{ node.xbill_class }}" >
-				{{ node.xbill_explanation }}: {{ node.xbill_label }}
-				{% if node.xbill_object.url %}
-					<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
+		    <h4>
+				{% if resource_type.url %}
+					<a href="{{ resource_type.url }}" target="blank">{{ resource_type }}</a>
 				{% else %}
-					 {{ node.xbill_object }}
+					{{ resource_type }}
+				{% endif %}
+				{% if resource_type.photo %}
+					<img src="{% thumbnail resource_type.photo big_photo_size %}" />
+				{% endif %}
+			</h4>
+			{% if resource_type.description %}
+				<div class="description" >{{ resource_type.description|urlize|linebreaks }}</div>
+			{% endif %}
+
+			{% for node in nodes %}
+				{% if not node.open and not node.close %}
+					</li>
+				{% endif %}
+		
+				{% if node.open %}
+						<ul class="xb" >
 				{% endif %}
 
-				{% if node.xbill_object.photo %}
-					<img src="{% thumbnail node.xbill_object.photo photo_size %}" />
-				{% endif %}
+				<li  class="xb  {{ node.xbill_class }}" >
+{% comment %}
+                    <p>Open: {{ node.open }} Close: {{ node.close }}</p>
+{% endcomment %}
+					{{ node.xbill_explanation }}: {{ node.xbill_label }}
+					{% if node.xbill_object.url %}
+						<a href="{{ node.xbill_object.url }}" target="blank">{{ node.xbill_object }}</a>
+					{% else %}
+						 {{ node.xbill_object }}
+					{% endif %}
 
-				{% if node.xbill_object.description %}
-					<div class="description" >{{ node.xbill_object.description|urlize|linebreaks }}</div>
-				{% endif %}
+					{% if node.xbill_object.photo %}
+						<img src="{% thumbnail node.xbill_object.photo photo_size %}" />
+					{% endif %}
 
-			{% for close in node.close %}
-    			</li>
-    			</ul>
+					{% if node.xbill_object.description %}
+						<div class="description" >{{ node.xbill_object.description|urlize|linebreaks }}</div>
+					{% endif %}
+
+				{% for close in node.close %}
+					</li>
+					</ul>
+				{% endfor %}
+
 			{% endfor %}
 
-		{% endfor %}
+		</div>
 
+		<div class="span2 filter">
+			<h4 style="margin-bottom: 0;" >Filter</h4>
+			<form id="category-form" action="." method="POST">
+				{% csrf_token %}
+				<p>
+					<input id="spinner" name="depth" value="{{ depth }}" /> Depth
+				</p>
+				<p><input type="checkbox" class="category" id="all" name="all" value="all" {% if select_all %}checked="yes"{% endif %} /> All Types</p>
+				<p><input type="checkbox" class="category" id="processes" name="processes" value="processes" /> Process Types</p>
+{% comment %}
+				<p><input type="checkbox" class="category" id="inputs" name="inputs" value="inputs" /> Inputs</p>
+{% endcomment %}
+				<p><input type="checkbox" class="category" id="features" name="features" value="features" /> Features</p>
+				<p><b>Input Categories:</b></p>
+				{% for cat in categories %}
+				<p style="margin-left: 1em;" ><input type="checkbox" class="category" id="{{ cat }}" name="{{ cat }}" value="{{ cat }}" /> {{ cat }}</p>
+				{% endfor %}
+				<input type='hidden' id='categories' name='categories' value='' />
+				<input type="submit" name="submit" class="btn btn-info" value="Filter" />
+			</form>
+		</div>
 	</div>
     </div>
+{% endblock %}
+{% block extra_script %}
+	<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+{% endblock %}
+{% block extra_body %}
+	{{ block.super }}
+    <script type="text/javascript">
+
+	$(document).ready(function(){
+
+		var selectedCats = "{{ selected_cats }}";
+
+		$('.category').each(function()
+		{
+			var cat = $(this)[0];
+            if (selectedCats.indexOf(cat.name) > -1)
+			{
+				$(this).prop('checked', true);
+			}
+		});
+
+		$('.category').click(function() 
+		{
+			var checkedCats = [];
+			var checkedBox = $(this)[0];
+			var allBox = $('#all')[0];
+			if (checkedBox == allBox)
+			{
+				$('.category').each(function()
+				{
+		            $(this).prop('checked', false);
+				});
+				$('#all').prop('checked', true);
+				checkedCats.push('all');
+			}
+			else
+			{
+				$('#all').prop('checked', false);
+				$('.category').each(function()
+				{
+					var cat = $(this)[0];
+		            if (cat.checked)
+					{
+						checkedCats.push(cat.value);
+					}
+				});
+			}
+			$('#categories').prop('value', checkedCats);
+		});
+
+		var depth = {{ depth }};
+		var selected_depth = {{ selected_depth }};
+
+		$(function() {
+		    var spinner = $( "#spinner" ).spinner({ min: 1, max: depth, width: 3 });
+			spinner.spinner( "value", selected_depth );	 
+
+		    $( "#disable" ).click(function() {
+		        if ( spinner.spinner( "option", "disabled" ) ) {
+		            spinner.spinner( "enable" );
+		        } else {
+		            spinner.spinner( "disable" );
+		        }
+		    });
+		    $( "#destroy" ).click(function() {
+		        if ( spinner.data( "ui-spinner" ) ) {
+		            spinner.spinner( "destroy" );
+		        } else {
+		            spinner.spinner();
+		        }
+		    });
+		    $( "#getvalue" ).click(function() {
+		        alert( spinner.spinner( "value" ) );
+		    });
+		    $( "#setvalue" ).click(function() {
+		        spinner.spinner( "value", depth );
+		    });
+	 
+		    $( "button" ).button();
+		});
+
+
+	}); // end document.ready
+
+    </script>
 {% endblock %}
