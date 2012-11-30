@@ -238,20 +238,29 @@ class XbillNode(object):
         ct = ContentType.objects.get_for_model(self.xbill_object().__class__)
         return "-".join(ct.name.split())
 
+    def category(self):
+        return self.node.xbill_category()
+
 
 def xbill_dfs(node, all_nodes, depth):
     """
     Performs a recursive depth-first search starting at ``node``. 
     """
     to_return = [XbillNode(node,depth),]
+    print "+created node:+", node, depth
+    import pdb; pdb.set_trace()
     for subnode in all_nodes:
         parents = subnode.xbill_parent_object().xbill_parents()
-        if parents and node in parents:
-            to_return.extend(xbill_dfs(subnode, all_nodes, depth+1))
+        if not subnode is node:
+            if parents and node in parents:
+                print "*active node:*", node, "*depth:*", depth, "*subnode:*", subnode, "*parent_object:*", subnode.xbill_parent_object(), "*parents:*", parents
+                import pdb; pdb.set_trace()
+                to_return.extend(xbill_dfs(subnode, all_nodes, depth+1))
     return to_return
 
 def explode_xbill_children(node, nodes):
     nodes.append(node)
+    #import pdb; pdb.set_trace()
     for kid in node.xbill_child_object().xbill_children():
         explode_xbill_children(kid, nodes)
 
@@ -259,8 +268,8 @@ def generate_xbill(resource_type):
     nodes = []
     for kid in resource_type.xbill_children():
         explode_xbill_children(kid, nodes)
-    #import pdb; pdb.set_trace()
     nodes = list(set(nodes))
+    import pdb; pdb.set_trace()
     to_return = []
     for kid in resource_type.xbill_children():
         to_return.extend(xbill_dfs(kid, nodes, 0))
