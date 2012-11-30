@@ -224,6 +224,7 @@ class XbillNode(object):
          self.depth = depth
          self.open = False
          self.close = []
+         self.xbill_class = self.node.xbill_class()
 
     def xbill_object(self):
         return self.node.xbill_child_object()
@@ -234,9 +235,9 @@ class XbillNode(object):
     def xbill_explanation(self):
         return self.node.xbill_explanation()
 
-    def xbill_class(self):
-        ct = ContentType.objects.get_for_model(self.xbill_object().__class__)
-        return "-".join(ct.name.split())
+    #def xbill_class(self):
+    #    ct = ContentType.objects.get_for_model(self.xbill_object().__class__)
+    #    return "-".join(ct.name.split())
 
     def category(self):
         return self.node.xbill_category()

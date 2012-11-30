@@ -387,6 +387,23 @@ def delete_process_type_confirmation(request,
         return HttpResponseRedirect('/%s/%s/'
             % ('accounting/edit-xbomfg', resource_type_id))
 
+@login_required
+def delete_feature_confirmation(request, 
+        feature_id, resource_type_id):
+    ft = get_object_or_404(Feature, pk=feature_id)
+    side_effects = False
+    if ft.options.all():
+        side_effects = True
+        return render_to_response('valueaccounting/feature_delete_confirmation.html', {
+            "feature": ft,
+            "resource_type_id": resource_type_id,
+            "side_effects": side_effects,
+            }, context_instance=RequestContext(request))
+    else:
+        ft.delete()
+        return HttpResponseRedirect('/%s/%s/'
+            % ('accounting/edit-xbomfg', resource_type_id))
+
 
 @login_required
 def delete_process_type(request, process_type_id):
@@ -400,6 +417,15 @@ def delete_process_type(request, process_type_id):
         else:
             return HttpResponseRedirect('/%s/'
                 % ('accounting/resources'))
+
+@login_required
+def delete_feature(request, feature_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        ft = get_object_or_404(Feature, pk=feature_id)
+        ft.delete()
+        next = request.POST.get("next")
+        return HttpResponseRedirect(next)
 
 @login_required
 def create_resource_type(request):
@@ -534,6 +560,20 @@ def change_agent_resource_type(request, agent_resource_type_id):
             return HttpResponseRedirect(next)
         else:
             raise ValidationError(form.errors)
+
+@login_required
+def change_feature(request, feature_id):
+    if request.method == "POST":
+        ft = get_object_or_404(Feature, pk=feature_id)
+        prefix = ft.xbill_change_prefix()
+        form = FeatureForm(data=request.POST, instance=ft, prefix=prefix)
+        if form.is_valid():
+            form.save()
+            next = request.POST.get("next")
+            return HttpResponseRedirect(next)
+        else:
+            raise ValidationError(form.errors)
+
 
 @login_required
 def create_agent_resource_type(request, resource_type_id):

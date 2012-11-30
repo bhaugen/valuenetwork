@@ -159,7 +159,10 @@ class EconomicAgent(models.Model):
         return self.produced_resource_type_relationships()
 
     def xbill_children(self):
-        return []      
+        return []
+
+    def xbill_class(self):
+        return "economic-agent"  
 
 
 class AssociationType(models.Model):
@@ -298,6 +301,9 @@ class EconomicResourceType(models.Model):
     def xbill_child_object(self):
         return self
 
+    def xbill_class(self):
+        return "economic-resource-type"
+
     def xbill_parent_object(self):
         return self
 
@@ -425,6 +431,9 @@ class AgentResourceType(models.Model):
         else:
             return self.resource_type
 
+    def xbill_class(self):
+        return self.xbill_child_object().xbill_class()
+
     def xbill_category(self):
         return Category(name="sources")
 
@@ -513,6 +522,9 @@ class ProcessType(models.Model):
         from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm
         return ProcessTypeResourceTypeForm(prefix=self.xbill_input_prefix())
 
+    def xbill_class(self):
+        return "process-type"
+
 
 class ProcessTypeResourceType(models.Model):
     process_type = models.ForeignKey(ProcessType,
@@ -555,6 +567,9 @@ class ProcessTypeResourceType(models.Model):
             return self.process_type
         else:
             return self.resource_type
+
+    def xbill_class(self):
+        return self.xbill_child_object().xbill_class()
 
     def xbill_parent_object(self):
         if self.relationship.direction == 'out':
@@ -696,6 +711,9 @@ class Feature(models.Model):
     def xbill_child_object(self):
         return self
 
+    def xbill_class(self):
+        return "feature"
+
     def xbill_parent_object(self):
         return self.process_type
 
@@ -727,6 +745,13 @@ class Feature(models.Model):
         init = {'options': option_ids,}
         return OptionsForm(initial=init)
 
+    def xbill_change_prefix(self):
+        return "".join(["FTR", str(self.id)])
+
+    def xbill_change_form(self):
+        from valuenetwork.valueaccounting.forms import FeatureForm
+        return FeatureForm(instance=self, prefix=self.xbill_change_prefix())
+
 
 class Option(models.Model):
     feature = models.ForeignKey(Feature, 
@@ -742,6 +767,9 @@ class Option(models.Model):
 
     def xbill_child_object(self):
         return self.component
+
+    def xbill_class(self):
+        return "option"
 
     def xbill_parent_object(self):
         return self.feature
