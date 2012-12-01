@@ -18,13 +18,16 @@ Roadmap:
 * Import Sensorica spreadsheet data. [done]
 * Create interfaces for members to enter contributions. [mockup, awaiting feedback]
 * Create an interface for members to experiment with value equations and income distributions. [mockup, awaiting feedback]
+* Add Features and Options for configured products [done]
+* Create a Lab Notes app for research and development work
+* Add a Wiki
 * Create a pluggable English vocabulary.
 * Translate the UI into French.
 * Create visualizations in the system. [started]:
    example: http://valnet.webfactional.com/accounting/network/24/
 * Create exports of combined data for visualizations and reports outside the system.
     [exports of simple data done]
-* Add a reversion system (revision tracking and undo) for data changes.
+* Add a reversion system (revision tracking and undo) for product and process design changes.
 
 Longer term:
 * Create a protocol for nodes in a federated value system to communicate and transact with one another.
