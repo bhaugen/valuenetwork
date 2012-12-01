@@ -693,6 +693,11 @@ class Process(models.Model):
 
 class Feature(models.Model):
     name = models.CharField(_('name'), max_length=128)
+    option_category = models.ForeignKey(Category,
+        verbose_name=_('option category'), related_name='features',
+        blank=True, null=True,
+        help_text=_("option selections will be limited to this category"),
+        limit_choices_to=Q(applies_to='Anything') | Q(applies_to='EconomicResourceType'))
     product = models.ForeignKey(EconomicResourceType, 
         related_name="features", verbose_name=_('product'))
     process_type = models.ForeignKey(ProcessType,
@@ -738,12 +743,15 @@ class Feature(models.Model):
     def xbill_parents(self):
         return [self.process_type, self]
 
+    def options_form(self):
+        from valuenetwork.valueaccounting.forms import OptionsForm
+        return OptionsForm(feature=self)
+
     def options_change_form(self):
         from valuenetwork.valueaccounting.forms import OptionsForm
-        #option_ids = self.options.values_list('id', flat=True)
         option_ids = self.options.values_list('component__id', flat=True)
         init = {'options': option_ids,}
-        return OptionsForm(initial=init)
+        return OptionsForm(feature=self, initial=init)
 
     def xbill_change_prefix(self):
         return "".join(["FTR", str(self.id)])

@@ -289,7 +289,6 @@ def edit_extended_bill(request, resource_type_id):
     change_process_form = ChangeProcessTypeForm()
     source_form = AgentResourceTypeForm()
     feature_form = FeatureForm()
-    options_form = OptionsForm()
     return render_to_response("valueaccounting/edit_xbill.html", {
         "resource_type": rt,
         "nodes": nodes,
@@ -300,7 +299,6 @@ def edit_extended_bill(request, resource_type_id):
         "change_process_form": change_process_form,
         "source_form": source_form,
         "feature_form": feature_form,
-        "options_form": options_form,
     }, context_instance=RequestContext(request))
 
 @login_required
@@ -489,7 +487,7 @@ def create_options_for_feature(request, feature_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         ft = get_object_or_404(Feature, pk=feature_id)
-        form = OptionsForm(request.POST)
+        form = OptionsForm(feature=ft, data=request.POST)
         if form.is_valid():
             options = eval(form.cleaned_data["options"])
             for option in options:
@@ -509,7 +507,7 @@ def change_options_for_feature(request, feature_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         ft = get_object_or_404(Feature, pk=feature_id)
-        form = OptionsForm(request.POST)
+        form = OptionsForm(feature=ft, data=request.POST)
         if form.is_valid():
             selected_options = eval(form.cleaned_data["options"])
             selected_options = [int(opt) for opt in selected_options]

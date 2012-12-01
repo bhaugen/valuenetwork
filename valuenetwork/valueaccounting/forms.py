@@ -16,12 +16,13 @@ class OptionsForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, feature, *args, **kwargs):
         super(OptionsForm, self).__init__(*args, **kwargs)
-        self.fields["options"].choices = [
-            (rt.id, rt.name) for rt in 
-                EconomicResourceType.objects.filter(category__name="Option")
-        ]
+        if feature.option_category:
+            options = EconomicResourceType.objects.filter(category=feature.option_category)
+        else:
+            options = EconomicResourceType.objects.all()
+        self.fields["options"].choices = [(rt.id, rt.name) for rt in options]
 
 class EconomicResourceTypeForm(forms.ModelForm):
     

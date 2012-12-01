@@ -473,7 +473,7 @@ ul {
 								  <div class="modal-body">
 										<form class="options-form" action="{% url create_options_for_feature feature_id=xbill_object.id %}" method="POST" >
 											{% csrf_token %}
-											{{ options_form|as_bootstrap }}
+											{{ xbill_object.options_form|as_bootstrap }}
 											<input type="hidden" name="next" value="{% url edit_extended_bill resource_type_id=resource_type.id %}" />
 										  <div class="modal-footer">
 											<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
