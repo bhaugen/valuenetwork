@@ -11,42 +11,15 @@
 
 <style>
 
-	table
-	{
-		font-size: 100%; 
-		border-collapse: collapse; 
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;	
-	}
-
-	th
-	{
-		font-weight: bold;
-		color: gray;
-		background-color:#EAF2D3;
-		text-align: left;
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;
-	}
-
-	td
-	{
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;
-	}
-
-	th, td
-	{
-		padding-left:5px;
-	}
-
 	tr.even td 
 	{
 		color:#000000;
 		background-color:#EAF2D3;
+	}
+
+	th
+	{
+		background-color:#C8D6E8;
 	}
 
 </style>
@@ -65,7 +38,7 @@
 		{% if unassigned %}
 			<div>
 				<h4>Unassigned Tasks</h4>
-				<table>
+				<table class="table table-bordered table-hover table-condensed" >
 					<thead>
 						<th>Due Date</th>
 						<th>Process</th>

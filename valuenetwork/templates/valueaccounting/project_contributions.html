@@ -7,42 +7,15 @@
 {% block extra_head %}
 <style>
 
-	table
-	{
-		font-size: 100%; 
-		border-collapse: collapse; 
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;	
-	}
-
-	th
-	{
-		font-weight: bold;
-		color: gray;
-		background-color:#EAF2D3;
-		text-align: left;
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;
-	}
-
-	td
-	{
-		border-style: solid; 
-		border-width: 1px; 
-		border-color: lightgrey;
-	}
-
-	th, td
-	{
-		padding-left:5px;
-	}
-
 	tr.even td 
 	{
 		color:#000000;
 		background-color:#EAF2D3;
+	}
+
+	th
+	{
+		background-color:#C8D6E8;
 	}
 
 </style>
@@ -56,7 +29,7 @@
         {% include "_messages.html" %}
 	<div>
 		<h1>{% trans "Project Contributions for " %} {{ project }}</h1>
-		<table style="width: 100%;" >
+		<table style="width: 100%;" class="table table-bordered table-hover table-condensed" >
 			<thead>
 				<th>Date</th>
 				<th>Type</th>
