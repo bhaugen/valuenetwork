@@ -605,6 +605,7 @@ class Project(models.Model):
         return EconomicAgent.objects.filter(id__in=id_list)
 
     def with_all_sub_projects(self):
+        from valuenetwork.valueaccounting.utils import flattened_children
         return flattened_children(self, Project.objects.all(), [])
 
 
