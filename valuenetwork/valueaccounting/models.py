@@ -1063,11 +1063,18 @@ class Commitment(models.Model):
         features = self.resource_type.features.all()
         if not features:
             return ""
-        if features.count() == 1:
-            return " ".join(["with feature", features[0].name])
-        else:
-            names = ', '.join([feature.name for feature in features])    
-            return " ".join(["with features", names])    
+        inputs = [ct.resource_type for ct in self.process.incoming_commitments()]
+        selected_options = []
+        for feature in features:
+            options = feature.options.all()
+            for option in options:
+                if option.component in inputs:
+                    selected_options.append(option.component)
+        names = ', '.join([so.name for so in selected_options])
+        prefix = "with option"
+        if len(selected_options) > 1:
+              prefix = "with options"
+        return " ".join([prefix, names])    
 
     def save(self, *args, **kwargs):
         from_id = "Unassigned"

@@ -33,10 +33,9 @@
 		<h1>{% trans "Timeline" %}</h1>
 		<p>{% trans "Double-click on months to slide days. Click on event in day to show details." %}</p>	
 		<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
-		<p style="color:red;">Note: this is test data, not meant to be accurate.</p>
 
 		{% if unassigned %}
-			<div>
+			<div style="margin-top: 1em;" >
 				<h4>Unassigned Tasks</h4>
 				<table class="table table-bordered table-hover table-condensed" >
 					<thead>

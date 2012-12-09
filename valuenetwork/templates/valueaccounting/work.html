@@ -1,0 +1,45 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Work" %}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<legend>{% trans "Work" %}</legend>
+
+{% comment %}
+			<p>
+				<a href="{% url timeline %}">Timeline</a>
+			</p>
+{% endcomment %}
+
+			{% if work %}
+		        <h3 style="margin-bottom: 4px;" >Work Requirements:</h3>
+					<ul>
+						{% for item in work %}
+							<li>
+								<b>{{ item.resource_type.name }}:</b> {{ item.quantity }} {{ item.unit_of_quantity }} due {{ item.due_date }}
+							</li>
+							<p style="margin-left: 1em; margin-bottom: 0;">
+								for process: {{ item.process }}
+							</p>
+                            <ul>
+								{% for source in item.resource_type.producing_agent_relationships %}
+									<li>
+										<b>Possible source:</b> {{ source.agent.name }}
+									</li>
+								{% endfor %}
+							</ul>
+						{% endfor %}
+					</ul>
+			{% endif %}
+
+
+	</div>
+    </div>
+{% endblock %}

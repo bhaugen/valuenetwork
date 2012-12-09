@@ -1,0 +1,39 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Supply" %}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<legend>{% trans "Supply" %}</legend>
+
+			{% if reqs %}
+		        <h3 style="margin-bottom: 4px;" >Material Requirements:</h3>
+					<ul>
+						{% for item in reqs %}
+							<li>
+								<b>{{ item.resource_type.name }}:</b> {{ item.quantity }} {{ item.unit_of_quantity }} due {{ item.due_date }}
+							</li>
+							<p style="margin-left: 1em; margin-bottom: 0;">
+								for process: {{ item.process }}
+							</p>
+                            <ul>
+								{% for source in item.resource_type.producing_agent_relationships %}
+									<li>
+										<b>Possible source:</b> {{ source.agent.name }} Lead time: {{ source.lead_time }} days
+									</li>
+								{% endfor %}
+							</ul>
+						{% endfor %}
+					</ul>
+			{% endif %}
+
+
+	</div>
+    </div>
+{% endblock %}

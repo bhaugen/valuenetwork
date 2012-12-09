@@ -642,7 +642,9 @@ def network(request, resource_type_id):
 
 def timeline(request):
     timeline_date = datetime.date.today().strftime("%b %e %Y 00:00:00 GMT-0600")
-    unassigned = Commitment.objects.filter(from_agent=None).order_by("due_date")
+    unassigned = Commitment.objects.filter(
+        from_agent=None,
+        resource_type__materiality="time-based").order_by("due_date")
     return render_to_response("valueaccounting/timeline.html", {
         "timeline_date": timeline_date,
         "unassigned": unassigned,
@@ -651,7 +653,11 @@ def timeline(request):
 def json_timeline(request):
     #data = "{ 'wiki-url':'http://simile.mit.edu/shelf/', 'wiki-section':'Simile JFK Timeline', 'dateTimeFormat': 'Gregorian','events': [{'start':'May 28 2006 09:00:00 GMT-0600','title': 'Writing Timeline documentation','link':'http://google.com','description':'Write some doc already','durationEvent':false }, {'start': 'Jun 16 2006 00:00:00 GMT-0600' ,'end':  'Jun 26 2006 00:00:00 GMT-0600' ,'durationEvent':true,'title':'Friends wedding'}]}"
     #import pdb; pdb.set_trace()
-    processes = Process.objects.all()
+    orders = Order.objects.all()
+    processes = []
+    for order in orders:
+        for commitment in order.producing_commitments():
+            processes.append(commitment.process)
     events = {'dateTimeFormat': 'Gregorian','events':[]}
     for process in processes:
         backshedule_events(process, events)
@@ -818,4 +824,31 @@ def order_schedule(request, order_id):
         "reqs": reqs,
         "work": work,
     }, context_instance=RequestContext(request))
+
+def demand(request):
+    orders = Order.objects.all()
+    return render_to_response("valueaccounting/demand.html", {
+        "orders": orders,
+    }, context_instance=RequestContext(request))
+
+def supply(request):
+    reqs = []
+    commitments = Commitment.objects.filter(resource_type__materiality="material")
+    for commitment in commitments:
+        if not commitment.resource_type.producing_commitments():
+            reqs.append(commitment)
+    return render_to_response("valueaccounting/supply.html", {
+        "reqs": reqs,
+    }, context_instance=RequestContext(request))
+
+def work(request):
+    work = []
+    commitments = Commitment.objects.filter(resource_type__materiality="time-based")
+    for commitment in commitments:
+        if not commitment.resource_type.producing_commitments():
+            work.append(commitment)
+    return render_to_response("valueaccounting/work.html", {
+        "work": work,
+    }, context_instance=RequestContext(request))
+
 

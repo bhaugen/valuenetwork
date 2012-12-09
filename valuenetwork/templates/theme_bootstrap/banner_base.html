@@ -18,21 +18,21 @@
             {% block column-1 %}
                 <h2>Demand</h2>
                 <p>Orders, Customers, Marketing</p>
-                <p><a class="btn" href="">View details &raquo;</a></p>
+                <p><a class="btn" href="{% url demand %}">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-2 %}
                 <h2>Supply</h2>
                 <p>Inventory, Material Requirements, Purchasing, Suppliers, Financial and Material Contributions</p>
-                <p><a class="btn" href="">View details &raquo;</a></p>
+                <p><a class="btn" href="{% url supply %}">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-3 %}
                 <h2>Work</h2>
                 <p>Schedules, Assignments, LabNotes, Time Contributions</p>
-                <p><a class="btn" href="">View details &raquo;</a></p>
+                <p><a class="btn" href="{% url work %}">View details &raquo;</a></p>
             {% endblock %}
             </div>
         </div>

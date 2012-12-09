@@ -60,5 +60,8 @@ urlpatterns = patterns("",
         name="json_resource_type_unit"),
     url(r"^create-order/$", 'valuenetwork.valueaccounting.views.create_order', name="create_order"),
     url(r"^order-schedule/(?P<order_id>\d+)/$", 'valuenetwork.valueaccounting.views.order_schedule', name="order_schedule"),
+    url(r"^demand/$", 'valuenetwork.valueaccounting.views.demand', name="demand"),
+    url(r"^supply/$", 'valuenetwork.valueaccounting.views.supply', name="supply"),
+    url(r"^work/$", 'valuenetwork.valueaccounting.views.work', name="work"),
 
 )

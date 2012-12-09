@@ -1,0 +1,30 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Demand" %}{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+		<legend>{% trans "Demand" %}</legend>
+
+			<p>
+				<a class="btn" href="{% url create_order %}">Create Order</a>
+			</p>
+			{% if orders %}
+		        <h3 style="margin-bottom: 4px;" >Open Orders:</h3>
+				<ul>
+				    {% for order in orders %}
+						<li><a href="{% url order_schedule order_id=order.id %}">{{ order }}</a></li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+
+
+	</div>
+    </div>
+{% endblock %}
