@@ -950,7 +950,7 @@ class Order(models.Model):
     description = models.TextField(_('description'), null=True, blank=True)
 
     class Meta:
-        ordering = ('-due_date',)
+        ordering = ('due_date',)
 
     def __unicode__(self):
         return " ".join(
@@ -971,6 +971,9 @@ class Commitment(models.Model):
     order = models.ForeignKey(Order,
         blank=True, null=True,
         related_name="commitments", verbose_name=_('order'))
+    independent_demand = models.ForeignKey(Order,
+        blank=True, null=True,
+        related_name="dependent_commitments", verbose_name=_('independent_demand'))
     event_type = models.ForeignKey(EventType, 
         related_name="commitments", verbose_name=_('event type'))
     relationship = models.ForeignKey(ResourceRelationship,

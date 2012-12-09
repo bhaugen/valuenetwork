@@ -709,6 +709,7 @@ def create_order(request):
                         process.save()
                         commitment = Commitment(
                             order=order,
+                            independent_demand=order,
                             event_type=ptrt.relationship.event_type,
                             relationship=ptrt.relationship,
                             due_date=order.due_date,
@@ -735,6 +736,7 @@ def create_order(request):
                                 if process_type != pt:
                                     raise ValueError(process_type)
                                 commitment = Commitment(
+                                    independent_demand=order,
                                     event_type=feature.relationship.event_type,
                                     relationship=feature.relationship,
                                     due_date=process.start_date,
@@ -761,6 +763,7 @@ def create_order(request):
                                     )
                                     next_process.save()
                                     next_commitment = Commitment(
+                                        independent_demand=order,
                                         event_type=pptr.relationship.event_type,
                                         relationship=pptr.relationship,
                                         due_date=process.start_date,
@@ -772,8 +775,8 @@ def create_order(request):
                                         created_by=request.user,
                                     )
                                     next_commitment.save()
-                                    generate_schedule(next_process, request.user)
-                        generate_schedule(process, request.user)
+                                    generate_schedule(next_process, order, request.user)
+                        generate_schedule(process, order, request.user)
                         return HttpResponseRedirect('/%s/%s/'
                             % ('accounting/order-schedule', order.id))
                      
@@ -783,13 +786,13 @@ def create_order(request):
     }, context_instance=RequestContext(request))
 
 def schedule_commitment(commitment, schedule, reqs, work, depth):
+    order = commitment.independent_demand
     commitment.depth = depth * 2
     schedule.append(commitment)
-    #depth += 1
     process = commitment.process
     process.depth = depth * 2
     schedule.append(process)
-    #depth += 1
+    #import pdb; pdb.set_trace()
     for inp in process.incoming_commitments():
         inp.depth = depth * 2
         schedule.append(inp)
@@ -797,7 +800,8 @@ def schedule_commitment(commitment, schedule, reqs, work, depth):
         pcs = resource_type.producing_commitments()
         if pcs:
             for pc in pcs:
-                schedule_commitment(pc, schedule, reqs, work, depth+1)
+                if pc.independent_demand == order:
+                    schedule_commitment(pc, schedule, reqs, work, depth+1)
         else:
             if resource_type.materiality == 'material':
                 reqs.append(inp)

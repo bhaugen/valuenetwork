@@ -14,6 +14,12 @@ class CategoryAdmin(admin.ModelAdmin):
 admin.site.register(Category, CategoryAdmin)
 
 
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('provider', 'receiver', 'description','due_date' )
+
+admin.site.register(Order, OrderAdmin)
+
+
 class ResourceRelationshipAdmin(admin.ModelAdmin):
     list_display = ('name', 'inverse_name', 'direction', 'event_type' )
     list_editable = ['event_type',]

@@ -159,11 +159,12 @@ def backshedule_events(process, events):
 
     return events
 
-def generate_schedule(process, user):
+def generate_schedule(process, order, user):
     pt = process.process_type
     output = process.main_outgoing_commitment()
     for ptrt in pt.consumed_resource_type_relationships():
         commitment = Commitment(
+            independent_demand=order,
             event_type=ptrt.relationship.event_type,
             relationship=ptrt.relationship,
             due_date=process.start_date,
@@ -189,6 +190,7 @@ def generate_schedule(process, user):
             )
             next_process.save()
             next_commitment = Commitment(
+                independent_demand=order,
                 event_type=pptr.relationship.event_type,
                 relationship=pptr.relationship,
                 due_date=process.start_date,
@@ -200,7 +202,7 @@ def generate_schedule(process, user):
                 created_by=user,
             )
             next_commitment.save()
-            generate_schedule(next_process, user)
+            generate_schedule(next_process, order, user)
 
 class XbillNode(object):
     def __init__(self, node, depth):

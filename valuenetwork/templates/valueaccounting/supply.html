@@ -22,6 +22,9 @@
 							<p style="margin-left: 1em; margin-bottom: 0;">
 								for process: {{ item.process }}
 							</p>
+							<p style="margin-left: 1em; margin-bottom: 0;">
+								for order: {{ item.independent_demand }}
+							</p>
                             <ul>
 								{% for source in item.resource_type.producing_agent_relationships %}
 									<li>
