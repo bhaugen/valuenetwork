@@ -666,6 +666,7 @@ def json_resource_type_unit(request, resource_type_id):
     data = serializers.serialize("json", EconomicResourceType.objects.filter(id=resource_type_id), fields=('unit',))
     return HttpResponse(data, mimetype="text/json-comment-filtered")
 
+@login_required
 def create_order(request):
     cats = Category.objects.filter(orderable=True)
     rts = EconomicResourceType.objects.filter(category__in=cats)

@@ -11,10 +11,11 @@
         {% include "_messages.html" %}
 	<div>
 		<legend>{% trans "Demand" %}</legend>
-
-			<p>
-				<a class="btn" href="{% url create_order %}">Create Order</a>
-			</p>
+			{% if user.is_authenticated %}
+				<p>
+					<a class="btn" href="{% url create_order %}">Create Order</a>
+				</p>
+			{% endif %}
 			{% if orders %}
 		        <h3 style="margin-bottom: 4px;" >Open Orders:</h3>
 				<ul>
