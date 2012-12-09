@@ -16,22 +16,23 @@
         <div class="row">
             <div class="span4">
             {% block column-1 %}
-                <h2>Projects</h2>
-                <p>SENSORICA Projects and their contributions.</p>
-                <p><a class="btn" href="{% url projects %}">View details &raquo;</a></p>
+                <h2>Demand</h2>
+                <p>Orders, Customers, Marketing</p>
+                <p><a class="btn" href="">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-2 %}
-                <h2>Log your contribution</h2>
-                <p><a class="btn" href="{% url log_time %}">Log time contributions &raquo;</a></p>
+                <h2>Supply</h2>
+                <p>Inventory, Material Requirements, Purchasing, Suppliers, Financial and Material Contributions</p>
+                <p><a class="btn" href="">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
             {% block column-3 %}
-                <h2>Value Equation</h2>
-                <p>Collaborate on figuring out the value equation formula for time contributions</p>
-                <p><a class="btn" href="{% url value_equation project_id=2 %}">View details &raquo;</a></p>
+                <h2>Work</h2>
+                <p>Schedules, Assignments, LabNotes, Time Contributions</p>
+                <p><a class="btn" href="">View details &raquo;</a></p>
             {% endblock %}
             </div>
         </div>
@@ -41,7 +42,7 @@
             {% block column-21 %}
                 <h2>Resource Types</h2>
                 <p>SENSORICA Resource Types with links to Recipes</p>
-                <p><a class="btn" href="{% url resource_types %}">View details &raquo;</a></p>
+                <p><a class="btn" href="">View details &raquo;</a></p>
             {% endblock %}
             </div>
             <div class="span4">
@@ -53,9 +54,9 @@
             </div>
             <div class="span4">
             {% block column-23 %}
-                <h2>Timeline</h2>
-                <p>Timeline for lab experiment</p>
-                <p><a class="btn" href="{% url timeline %}">View details &raquo;</a></p>
+                <h2>Value Equation</h2>
+                <p>Collaborate on figuring out the value equation formula for time contributions</p>
+                <p><a class="btn" href="{% url value_equation project_id=2 %}">View details &raquo;</a></p>
             {% endblock %}
             </div>
         </div>

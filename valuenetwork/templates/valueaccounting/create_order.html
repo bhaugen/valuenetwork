@@ -1,0 +1,127 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load bootstrap_tags %}
+
+{% block head_title %}{% trans "Create Order" %}{% endblock %}
+
+{% block extra_head %}
+
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+
+<style>
+
+	tr.even td 
+	{
+		color:#000000;
+		background-color:#EAF2D3;
+	}
+
+	th
+	{
+		background-color:#C8D6E8;
+	}
+
+.item-description
+{
+    height: 64px;
+}
+
+#id_description
+{
+  width: 53em;
+}
+
+</style>
+
+{% endblock %}
+
+{% block body_class %}projects{% endblock %}
+
+{% block body_base %}
+    <div class="container">
+        {% include "_messages.html" %}
+	<div>
+
+		<legend>{% trans "Create Order" %}</legend>
+
+		<form method="POST" action="">
+			{% csrf_token %}
+			<div class="row-fluid">
+				<div class="span3 control-group">
+					<b>Provider:</b></br>
+					{{ order_form.provider }}
+				</div>
+				<div class="span3 control-group">
+					<b>Receiver:</b></br>
+					{{ order_form.receiver }}
+				</div>
+				<div class="span2 control-group">
+					<b>Due date:</b></br>
+					{{ order_form.due_date }}
+				</div>
+			</div>
+			<div class="row-fluid">
+				<div class="span8 control-group">
+						<b>Notes:</b></br>
+						{{ order_form.description }}
+				</div>
+				<div class="form-actions span2">
+		        	<button class="btn btn-primary" type="submit">Submit</button>
+		    	</div>
+			</div>
+
+			<table style="width: 100%;" class="table table-bordered table-hover table-condensed" >
+				<thead>
+					<th>Resource</th>
+					<th>Options</th>
+					<th>Qty</th>
+					<th>Unit</th>
+					<th>Notes</th>
+				</thead>
+				<tbody>	
+					{% for form in item_forms %}
+						{{ form.resource_type_id }}
+						<tr class="{% cycle 'odd' 'even' %}">
+							<td>{{ form.resource_type.name }}</td>
+							<td>
+								{% for feature in form.features %}
+									{{ feature.feature.name }} {{ feature.options }} 
+								{% endfor %}
+							</td>
+							<td>{{ form.quantity }}</td>
+							<td>{{ form.resource_type.unit }}</td>
+							<td>{{ form.description }}</td>
+						</tr>
+					{% endfor %}
+				<tbody>	
+			</table>
+			<div class="form-actions">
+		       	<button class="btn btn-primary" type="submit">Submit</button>
+		   	</div>
+
+		</form>
+
+	</div>
+    </div>
+{% endblock %}
+{% block extra_script %}
+<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+{% endblock %}
+
+{% block extra_body %}
+	{{ block.super }}
+
+    <script type="text/javascript">
+
+	$(document).ready(function(){
+
+		$(function() {
+        	$( "#id_due_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+    	});
+
+	}); // end document.ready
+    </script>
+
+{% endblock %}
+

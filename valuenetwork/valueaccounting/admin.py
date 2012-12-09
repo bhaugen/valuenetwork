@@ -15,7 +15,8 @@ admin.site.register(Category, CategoryAdmin)
 
 
 class ResourceRelationshipAdmin(admin.ModelAdmin):
-    list_display = ('name', 'inverse_name', 'direction' )
+    list_display = ('name', 'inverse_name', 'direction', 'event_type' )
+    list_editable = ['event_type',]
 
 admin.site.register(ResourceRelationship, ResourceRelationshipAdmin)
 
@@ -95,7 +96,7 @@ admin.site.register(Project, ProjectAdmin)
 
 class CommitmentAdmin(admin.ModelAdmin):
     date_hierarchy = 'due_date'
-    list_display = ('event_type', 'due_date', 'from_agent', 'project', 
+    list_display = ('event_type', 'due_date', 'from_agent', 'process', 'project', 
         'resource_type', 'quantity', 'unit_of_quantity', 'description', 'quality')
     list_filter = ['event_type', 'project', 'from_agent', ]
     search_fields = ['name', 'event_type__name', 'from_agent__name', 'to_agent__name', 'resource_type__name']

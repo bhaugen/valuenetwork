@@ -1,72 +1,13 @@
-import re
 import datetime
 from itertools import chain, imap
-from django.template.defaultfilters import slugify
 from django.contrib.contenttypes.models import ContentType
+
+from valuenetwork.valueaccounting.models import Commitment, Process
 
 def split_thousands(n, sep=','):
     s = str(n)
     if len(s) <= 3: return s  
     return split_thousands(s[:-3], sep) + sep + s[-3:]
-
-def unique_slugify(instance, value, slug_field_name='slug', queryset=None,
-                   slug_separator='-'):
-    """
-    Calculates a unique slug of ``value`` for an instance.
-
-    ``slug_field_name`` should be a string matching the name of the field to
-    store the slug in (and the field to check against for uniqueness).
-
-    ``queryset`` usually doesn't need to be explicitly provided - it'll default
-    to using the ``.all()`` queryset from the model's default manager.
-    """
-    slug_field = instance._meta.get_field(slug_field_name)
-
-    slug = getattr(instance, slug_field.attname)
-    slug_len = slug_field.max_length
-
-    # Sort out the initial slug. Chop its length down if we need to.
-    slug = slugify(value)
-    if slug_len:
-        slug = slug[:slug_len]
-    slug = _slug_strip(slug, slug_separator)
-    original_slug = slug
-
-    # Create a queryset, excluding the current instance.
-    if not queryset:
-        queryset = instance.__class__._default_manager.all()
-        if instance.pk:
-            queryset = queryset.exclude(pk=instance.pk)
-
-    # Find a unique slug. If one matches, at '-2' to the end and try again
-    # (then '-3', etc).
-    next = 2
-    while not slug or queryset.filter(**{slug_field_name: slug}):
-        slug = original_slug
-        end = '-%s' % next
-        if slug_len and len(slug) + len(end) > slug_len:
-            slug = slug[:slug_len-len(end)]
-            slug = _slug_strip(slug, slug_separator)
-        slug = '%s%s' % (slug, end)
-        next += 1
-
-    setattr(instance, slug_field.attname, slug)
-
-
-def _slug_strip(value, separator=None):
-    """
-    Cleans up a slug by removing slug separator characters that occur at the
-    beginning or end of a slug.
-
-    If an alternate separator is used, it will also replace any instances of
-    the default '-' separator with the new separator.
-    """
-    if separator == '-' or not separator:
-        re_sep = '-'
-    else:
-        re_sep = '(?:-|%s)' % re.escape(separator)
-        value = re.sub('%s+' % re_sep, separator, value)
-    return re.sub(r'^%s+|%s+$' % (re_sep, re_sep), '', value)
 
 def dfs(node, all_nodes, depth):
     """
@@ -213,10 +154,53 @@ def backshedule_events(process, events):
             ic.description,
         )
         events['events'].append(te.dictify())
-        #for pp in ic.resource_type.producing_process_types():
-        #    backschedule_process_types(ic, pp,events)
+        for pp in ic.resource_type.producing_process_types():
+            backschedule_process_types(ic, pp,events)
 
     return events
+
+def generate_schedule(process, user):
+    pt = process.process_type
+    output = process.main_outgoing_commitment()
+    for ptrt in pt.consumed_resource_type_relationships():
+        commitment = Commitment(
+            event_type=ptrt.relationship.event_type,
+            relationship=ptrt.relationship,
+            due_date=process.start_date,
+            resource_type=ptrt.resource_type,
+            process=process,
+            project=pt.project,
+            quantity=output.quantity * ptrt.quantity,
+            unit_of_quantity=ptrt.resource_type.unit,
+            created_by=user,
+        )
+        commitment.save()
+        pptr = ptrt.resource_type.main_producing_process_type_relationship()
+        if pptr:
+            next_pt = pptr.process_type
+            start_date = process.start_date - datetime.timedelta(minutes=next_pt.estimated_duration)
+            next_process = Process(          
+                name=next_pt.name,
+                process_type=next_pt,
+                project=next_pt.project,
+                url=next_pt.url,
+                end_date=process.start_date,
+                start_date=start_date,
+            )
+            next_process.save()
+            next_commitment = Commitment(
+                event_type=pptr.relationship.event_type,
+                relationship=pptr.relationship,
+                due_date=process.start_date,
+                resource_type=pptr.resource_type,
+                process=next_process,
+                project=next_pt.project,
+                quantity=output.quantity * pptr.quantity,
+                unit_of_quantity=pptr.resource_type.unit,
+                created_by=user,
+            )
+            next_commitment.save()
+            generate_schedule(next_process, user)
 
 class XbillNode(object):
     def __init__(self, node, depth):

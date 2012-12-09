@@ -662,5 +662,160 @@ def json_resource_type_unit(request, resource_type_id):
     data = serializers.serialize("json", EconomicResourceType.objects.filter(id=resource_type_id), fields=('unit',))
     return HttpResponse(data, mimetype="text/json-comment-filtered")
 
+def create_order(request):
+    cat = Category.objects.get(name='Product')
+    rts = cat.resource_types.all()
+    item_forms = []
+    data = request.POST or None
+    order_form = OrderForm(data=data)
+    for rt in rts:
+        prefix1 = "-".join(['RT', str(rt.id)])
+        init = {'resource_type_id': rt.id,}
+        form = OrderItemForm(data=data, prefix=prefix1, resource_type=rt, initial=init)
+        form.features = []
+        for ft in rt.features.all():
+            prefix2 = "-".join(['FT', str(ft.id)])
+            form.features.append(OrderItemOptionsForm(data=data, prefix=prefix2, feature=ft))
+        item_forms.append(form)
+    if request.method == "POST":
+        if order_form.is_valid():
+            order = order_form.save()
+            #import pdb; pdb.set_trace()
+            for form in item_forms:
+                if form.is_valid():
+                    data = form.cleaned_data
+                    qty = data["quantity"]
+                    if qty:
+                        rt_id = data["resource_type_id"]
+                        rt = EconomicResourceType.objects.get(id=rt_id)
+                        pt = rt.main_producing_process_type()
+                        ptrt = rt.main_producing_process_type_relationship()
 
+                        start_date = order.due_date - datetime.timedelta(minutes=pt.estimated_duration)
+                        process = Process(
+                            name=pt.name,
+                            process_type=pt,
+                            project=pt.project,
+                            url=pt.url,
+                            end_date=order.due_date,
+                            start_date=start_date,
+                            owner=order.provider,
+                            managed_by=order.provider,
+                        )
+                        process.save()
+                        commitment = Commitment(
+                            order=order,
+                            event_type=ptrt.relationship.event_type,
+                            relationship=ptrt.relationship,
+                            due_date=order.due_date,
+                            from_agent_type=order.provider.agent_type,
+                            from_agent=order.provider,
+                            to_agent=order.receiver,
+                            resource_type=rt,
+                            process=process,
+                            project=pt.project,
+                            description=data["description"],
+                            quantity=qty,
+                            unit_of_quantity=rt.unit,
+                            created_by=request.user,
+                        )
+                        commitment.save()
+                        for ftr in form.features:
+                            if ftr.is_valid():
+                                option_id = ftr.cleaned_data["options"]
+                                option = Option.objects.get(id=option_id)
+                                component = option.component
+                                feature = ftr.feature
+                                process_type = feature.process_type
+                                #import pdb; pdb.set_trace()
+                                if process_type != pt:
+                                    raise ValueError(process_type)
+                                commitment = Commitment(
+                                    event_type=feature.relationship.event_type,
+                                    relationship=feature.relationship,
+                                    due_date=process.start_date,
+                                    to_agent=order.provider,
+                                    resource_type=component,
+                                    process=process,
+                                    project=pt.project,
+                                    quantity=qty * feature.quantity,
+                                    unit_of_quantity=component.unit,
+                                    created_by=request.user,
+                                )
+                                commitment.save()
+                                pptr = component.main_producing_process_type_relationship()
+                                if pptr:
+                                    next_pt = pptr.process_type
+                                    start_date = process.start_date - datetime.timedelta(minutes=next_pt.estimated_duration)
+                                    next_process = Process(          
+                                        name=next_pt.name,
+                                        process_type=next_pt,
+                                        project=next_pt.project,
+                                        url=next_pt.url,
+                                        end_date=process.start_date,
+                                        start_date=start_date,
+                                    )
+                                    next_process.save()
+                                    next_commitment = Commitment(
+                                        event_type=pptr.relationship.event_type,
+                                        relationship=pptr.relationship,
+                                        due_date=process.start_date,
+                                        resource_type=pptr.resource_type,
+                                        process=next_process,
+                                        project=next_pt.project,
+                                        quantity=qty * feature.quantity,
+                                        unit_of_quantity=pptr.resource_type.unit,
+                                        created_by=request.user,
+                                    )
+                                    next_commitment.save()
+                                    generate_schedule(next_process, request.user)
+                        generate_schedule(process, request.user)
+                        return HttpResponseRedirect('/%s/%s/'
+                            % ('accounting/order-schedule', order.id))
+                     
+    return render_to_response("valueaccounting/create_order.html", {
+        "order_form": order_form,
+        "item_forms": item_forms,
+    }, context_instance=RequestContext(request))
+
+def schedule_commitment(commitment, schedule, reqs, work, depth):
+    commitment.depth = depth * 2
+    schedule.append(commitment)
+    #depth += 1
+    process = commitment.process
+    process.depth = depth * 2
+    schedule.append(process)
+    #depth += 1
+    for inp in process.incoming_commitments():
+        inp.depth = depth * 2
+        schedule.append(inp)
+        resource_type = inp.resource_type
+        pcs = resource_type.producing_commitments()
+        if pcs:
+            for pc in pcs:
+                schedule_commitment(pc, schedule, reqs, work, depth+1)
+        else:
+            if resource_type.materiality == 'material':
+                reqs.append(inp)
+            elif resource_type.materiality == 'time-based':
+                work.append(inp)
+            for art in resource_type.producing_agent_relationships():
+                art.depth = (depth + 1) * 2
+                schedule.append(art)
+
+    return schedule
+
+def order_schedule(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    sked = []
+    reqs = []
+    work = []
+    for ct in order.producing_commitments():
+        schedule_commitment(ct, sked, reqs, work, 0)
+    return render_to_response("valueaccounting/order_schedule.html", {
+        "order": order,
+        "sked": sked,
+        "reqs": reqs,
+        "work": work,
+    }, context_instance=RequestContext(request))
 

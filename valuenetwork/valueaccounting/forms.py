@@ -8,6 +8,38 @@ from valuenetwork.tekextensions.widgets import SelectWithPopUp
 from valuenetwork.valueaccounting.models import *
 
 
+class OrderForm(forms.ModelForm):
+    due_date = forms.CharField(widget=forms.TextInput(attrs={'class': 'input-small',}))
+
+    class Meta:
+        model = Order
+        exclude = ('order_date',)
+
+
+class OrderItemForm(forms.ModelForm):
+    resource_type_id = forms.CharField(widget=forms.HiddenInput)
+    quantity = forms.DecimalField(required=False, widget=forms.TextInput(attrs={'class': 'input-small',}))
+    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'item-description',}))
+
+    def __init__(self, resource_type, *args, **kwargs):
+        super(OrderItemForm, self).__init__(*args, **kwargs)
+        self.resource_type = resource_type
+
+    class Meta:
+        model = Commitment
+        fields = ('quantity', 'description')
+
+
+class OrderItemOptionsForm(forms.Form):
+
+    options = forms.ChoiceField()
+
+    def __init__(self, feature, *args, **kwargs):
+        super(OrderItemOptionsForm, self).__init__(*args, **kwargs)
+        self.feature = feature
+        self.fields["options"].choices = [(opt.id, opt.component.name) for opt in feature.options.all()]
+
+
 class OptionsForm(forms.Form):
 
     options = forms.CharField(

@@ -58,6 +58,7 @@ urlpatterns = patterns("",
         name="delete_source"),
     url(r"^json-resourcetype-unit/(?P<resource_type_id>\d+)/$", 'valuenetwork.valueaccounting.views.json_resource_type_unit', 
         name="json_resource_type_unit"),
-
+    url(r"^create-order/$", 'valuenetwork.valueaccounting.views.create_order', name="create_order"),
+    url(r"^order-schedule/(?P<order_id>\d+)/$", 'valuenetwork.valueaccounting.views.order_schedule', name="order_schedule"),
 
 )

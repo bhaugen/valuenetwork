@@ -1,4 +1,5 @@
 import datetime
+import re
 from decimal import *
 
 from django.db import models
@@ -7,10 +8,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.template.defaultfilters import slugify
 
 from easy_thumbnails.fields import ThumbnailerImageField
-
-from valuenetwork.valueaccounting.utils import *
 
 
 """Models based on REA
@@ -23,6 +23,65 @@ REA is also the basis for ISO/IEC FDIS 15944-4 ACCOUNTING AND ECONOMIC ONTOLOGY
 http://global.ihs.com/doc_detail.cfm?item_s_key=00495115&item_key_date=920616
 
 """
+
+def unique_slugify(instance, value, slug_field_name='slug', queryset=None,
+                   slug_separator='-'):
+    """
+    Calculates a unique slug of ``value`` for an instance.
+
+    ``slug_field_name`` should be a string matching the name of the field to
+    store the slug in (and the field to check against for uniqueness).
+
+    ``queryset`` usually doesn't need to be explicitly provided - it'll default
+    to using the ``.all()`` queryset from the model's default manager.
+    """
+    slug_field = instance._meta.get_field(slug_field_name)
+
+    slug = getattr(instance, slug_field.attname)
+    slug_len = slug_field.max_length
+
+    # Sort out the initial slug. Chop its length down if we need to.
+    slug = slugify(value)
+    if slug_len:
+        slug = slug[:slug_len]
+    slug = _slug_strip(slug, slug_separator)
+    original_slug = slug
+
+    # Create a queryset, excluding the current instance.
+    if not queryset:
+        queryset = instance.__class__._default_manager.all()
+        if instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+    # Find a unique slug. If one matches, at '-2' to the end and try again
+    # (then '-3', etc).
+    next = 2
+    while not slug or queryset.filter(**{slug_field_name: slug}):
+        slug = original_slug
+        end = '-%s' % next
+        if slug_len and len(slug) + len(end) > slug_len:
+            slug = slug[:slug_len-len(end)]
+            slug = _slug_strip(slug, slug_separator)
+        slug = '%s%s' % (slug, end)
+        next += 1
+
+    setattr(instance, slug_field.attname, slug)
+
+
+def _slug_strip(value, separator=None):
+    """
+    Cleans up a slug by removing slug separator characters that occur at the
+    beginning or end of a slug.
+
+    If an alternate separator is used, it will also replace any instances of
+    the default '-' separator with the new separator.
+    """
+    if separator == '-' or not separator:
+        re_sep = '-'
+    else:
+        re_sep = '(?:-|%s)' % re.escape(separator)
+        value = re.sub('%s+' % re_sep, separator, value)
+    return re.sub(r'^%s+|%s+$' % (re_sep, re_sep), '', value)
 
 CATEGORIZATION_CHOICES = (
     ('Anything', _('Anything')),
@@ -179,6 +238,31 @@ class AgentAssociation(models.Model):
     description = models.TextField(_('description'), blank=True, null=True)
 
 
+RESOURCE_EFFECT_CHOICES = (
+    ('+', _('increase')),
+    ('-', _('decrease')),
+    ('x', _('transfer')), #means - for from_agent, + for to_agent
+    ('=', _('no effect')),
+)
+
+class EventType(models.Model):
+    name = models.CharField(_('name'), max_length=128)
+    resource_effect = models.CharField(_('resource effect'), 
+        max_length=12, choices=RESOURCE_EFFECT_CHOICES)
+    unit_type = models.CharField(_('unit type'), max_length=12, choices=UNIT_TYPE_CHOICES)
+    slug = models.SlugField(_("Page name"), editable=False)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __unicode__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        unique_slugify(self, self.name)
+        super(EventType, self).save(*args, **kwargs)
+
+
 """ design_issue:
     Materiality is probably part of a Category model.
 
@@ -250,8 +334,22 @@ class EconomicResourceType(models.Model):
     def producing_process_type_relationships(self):
         return self.process_types.filter(relationship__direction='out')
 
+    def main_producing_process_type_relationship(self):
+        ptrts = self.producing_process_type_relationships()
+        if ptrts:
+            return ptrts[0]
+        else:
+            return None
+
     def producing_process_types(self):
         return [pt.process_type for pt in self.producing_process_type_relationships()]
+
+    def main_producing_process_type(self):
+        pts = self.producing_process_types()
+        if pts:
+            return pts[0]
+        else:
+            return None
 
     def consuming_process_type_relationships(self):
         return self.process_types.filter(relationship__direction='in')
@@ -284,6 +382,12 @@ class EconomicResourceType(models.Model):
     def producers(self):
         arts = self.producer_relationships()
         return [art.agent for art in arts]
+
+    def producing_commitments(self):
+        return self.commitments.filter(relationship__event_type__resource_effect='+')
+
+    def consuming_commitments(self):
+        return self.commitments.filter(relationship__event_type__resource_effect='-')
 
     def xbill_parents(self):
         answer = list(self.consuming_process_type_relationships())
@@ -362,6 +466,9 @@ class ResourceRelationship(models.Model):
     inverse_name = models.CharField(_('inverse name'), max_length=40, blank=True)
     direction = models.CharField(_('direction'), 
         max_length=12, choices=DIRECTION_CHOICES, default='in')
+    event_type = models.ForeignKey(EventType,
+        blank=True, null=True,
+        verbose_name=_('event type'), related_name='resource_relationships')
 
     class Meta:
         ordering = ('name', )
@@ -413,6 +520,9 @@ class AgentResourceType(models.Model):
             self.resource_type.name,
         ])
 
+    def label(self):
+        return "source"
+
     def timeline_title(self):
         return " ".join(["Get ", self.resource_type.name, "from ", self.agent.name])
 
@@ -454,10 +564,55 @@ class AgentResourceType(models.Model):
         return AgentResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
 
 
+class Project(models.Model):
+    name = models.CharField(_('name'), max_length=128) 
+    parent = models.ForeignKey('self', blank=True, null=True, 
+        verbose_name=_('parent'), related_name='sub_projects')
+    project_team = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="project_team", verbose_name=_('project team'))
+    importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("0"))
+    slug = models.SlugField(_("Page name"), editable=False)
+    
+    class Meta:
+        ordering = ('name',)
+    
+    def __unicode__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        unique_slugify(self, self.name)
+        super(Project, self).save(*args, **kwargs)
+
+    def time_contributions(self):
+        #todo: hack
+        et = EventType.objects.get(name='Time Contribution')
+        return sum(event.quantity for event in self.events.filter(
+            event_type=et))
+
+    def contributions(self):
+        return sum(event.quantity for event in self.events.filter(
+            event_type__resource_effect='-'))
+
+    def contributions_count(self):
+        return self.events.filter(event_type__resource_effect='-').count()
+
+    def contributors(self):
+        ids = self.events.filter(event_type__resource_effect='-').values_list('from_agent').order_by('from_agent').distinct()
+        id_list = [id[0] for id in ids]
+        return EconomicAgent.objects.filter(id__in=id_list)
+
+    def with_all_sub_projects(self):
+        return flattened_children(self, Project.objects.all(), [])
+
+
 class ProcessType(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
         verbose_name=_('parent'), related_name='sub_process_types', editable=False)
+    project = models.ForeignKey(Project,
+        blank=True, null=True,
+        verbose_name=_('project'), related_name='process_types')
     description = models.TextField(_('description'), blank=True, null=True)
     url = models.CharField(_('url'), max_length=255, blank=True)
     estimated_duration = models.IntegerField(_('estimated duration'), 
@@ -605,48 +760,6 @@ class ProcessTypeResourceType(models.Model):
             return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
 
 
-class Project(models.Model):
-    name = models.CharField(_('name'), max_length=128) 
-    parent = models.ForeignKey('self', blank=True, null=True, 
-        verbose_name=_('parent'), related_name='sub_projects')
-    project_team = models.ForeignKey(EconomicAgent,
-        blank=True, null=True,
-        related_name="project_team", verbose_name=_('project team'))
-    importance = models.DecimalField(_('importance'), max_digits=3, decimal_places=0, default=Decimal("0"))
-    slug = models.SlugField(_("Page name"), editable=False)
-    
-    class Meta:
-        ordering = ('name',)
-    
-    def __unicode__(self):
-        return self.name
-    
-    def save(self, *args, **kwargs):
-        unique_slugify(self, self.name)
-        super(Project, self).save(*args, **kwargs)
-
-    def time_contributions(self):
-        #todo: hack
-        et = EventType.objects.get(name='Time Contribution')
-        return sum(event.quantity for event in self.events.filter(
-            event_type=et))
-
-    def contributions(self):
-        return sum(event.quantity for event in self.events.filter(
-            event_type__resource_effect='-'))
-
-    def contributions_count(self):
-        return self.events.filter(event_type__resource_effect='-').count()
-
-    def contributors(self):
-        ids = self.events.filter(event_type__resource_effect='-').values_list('from_agent').order_by('from_agent').distinct()
-        id_list = [id[0] for id in ids]
-        return EconomicAgent.objects.filter(id__in=id_list)
-
-    def with_all_sub_projects(self):
-        return flattened_children(self, Project.objects.all(), [])
-
-
 class Process(models.Model):
     name = models.CharField(_('name'), max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, 
@@ -672,7 +785,13 @@ class Process(models.Model):
         verbose_name_plural = "processes"
 
     def __unicode__(self):
-        return self.name
+        return " ".join([
+            self.name,
+            "ending",
+            self.end_date.strftime('%Y-%m-%d'),
+            "starting",
+            self.start_date.strftime('%Y-%m-%d'),
+            ])
 
     def save(self, *args, **kwargs):
         slug = "-".join([
@@ -683,12 +802,25 @@ class Process(models.Model):
         unique_slugify(self, slug)
         super(Process, self).save(*args, **kwargs)
 
+    def label(self):
+        return "process"
+
     def timeline_title(self):
         #return " ".join([self.name, "Process"])
         return self.name
 
     def incoming_commitments(self):
-        return self.commitments.filter(to_agent__id=self.owner.id)
+        return self.commitments.filter(relationship__direction='in')
+
+    def outgoing_commitments(self):
+        return self.commitments.filter(relationship__direction='out')
+
+    def main_outgoing_commitment(self):
+        cts = self.outgoing_commitments()
+        if cts:
+            return cts[0]
+        else:
+            return None
 
 
 class Feature(models.Model):
@@ -703,6 +835,9 @@ class Feature(models.Model):
     process_type = models.ForeignKey(ProcessType,
         blank=True, null=True,
         verbose_name=_('process type'), related_name='features')
+    relationship = models.ForeignKey(ResourceRelationship,
+        blank=True, null=True,
+        verbose_name=_('relationship'), related_name='features')
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=Decimal('0.00'))
     unit_of_quantity = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit'), related_name="feature_units")
@@ -801,36 +936,45 @@ class Option(models.Model):
         return [self.feature, self]
 
 
-
-RESOURCE_EFFECT_CHOICES = (
-    ('+', _('increase')),
-    ('-', _('decrease')),
-    ('x', _('transfer')), #means - for from_agent, + for to_agent
-    ('=', _('no effect')),
-)
-
-class EventType(models.Model):
-    name = models.CharField(_('name'), max_length=128)
-    resource_effect = models.CharField(_('resource effect'), 
-        max_length=12, choices=RESOURCE_EFFECT_CHOICES)
-    unit_type = models.CharField(_('unit type'), max_length=12, choices=UNIT_TYPE_CHOICES)
-    slug = models.SlugField(_("Page name"), editable=False)
+class Order(models.Model):
+    receiver = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="purchase_orders", verbose_name=_('receiver'))
+    provider = models.ForeignKey(EconomicAgent,
+        blank=True, null=True,
+        related_name="sales_orders", verbose_name=_('provider'))
+    order_date = models.DateField(_('order date'), default=datetime.date.today)
+    due_date = models.DateField(_('due date'))
+    description = models.TextField(_('description'), null=True, blank=True)
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('-due_date',)
 
     def __unicode__(self):
-        return self.name
+        return " ".join(
+            ["Order", 
+            str(self.id), 
+            ", provider:", 
+            self.provider.name, 
+            "receiver:", 
+            self.receiver.name, 
+            "due:",
+            self.due_date.strftime('%Y-%m-%d'),
+            ])
 
-    def save(self, *args, **kwargs):
-        unique_slugify(self, self.name)
-        super(EventType, self).save(*args, **kwargs)
-
+    def producing_commitments(self):
+        return self.commitments.all()
 
 class Commitment(models.Model):
+    order = models.ForeignKey(Order,
+        blank=True, null=True,
+        related_name="commitments", verbose_name=_('order'))
     event_type = models.ForeignKey(EventType, 
         related_name="commitments", verbose_name=_('event type'))
-    commitment_date = models.DateField(_('commitment date'))
+    relationship = models.ForeignKey(ResourceRelationship,
+        blank=True, null=True,
+        verbose_name=_('relationship'), related_name='commitments')
+    commitment_date = models.DateField(_('commitment date'), default=datetime.date.today)
     due_date = models.DateField(_('due date'))
     from_agent_type = models.ForeignKey(AgentType,
         blank=True, null=True,
@@ -874,26 +1018,56 @@ class Commitment(models.Model):
 
     def __unicode__(self):
         quantity_string = str(self.quantity)
-        from_agt = 'Unassigned'
-        if self.from_agent:
-            from_agt = self.from_agent.name
-        to_agt = 'Unassigned'
-        if self.to_agent:
-            to_agt = self.to_agent.name
         resource_name = ""
         if self.resource_type:
-			resource_name = self.resource_type.name
-        return ' '.join([
-            "Commitment for",
-            self.event_type.name,
-            self.due_date.strftime('%Y-%m-%d'),
-            'from',
-            from_agt,
-            'to',
-            to_agt,
-            quantity_string,
-            resource_name,
+            resource_name = self.resource_type.name
+        if self.order:
+            from_agt = 'Unassigned'
+            if self.from_agent:
+                from_agt = self.from_agent.name
+            to_agt = 'Unassigned'
+            if self.to_agent:
+                to_agt = self.to_agent.name
+            if self.relationship.direction == "out":
+                name1 = from_agt
+                name2 = to_agt
+                prep = "for"
+            else:
+                name2 = from_agt
+                name1 = to_agt
+                prep = "from"
+            return ' '.join([
+                name1,
+                self.relationship.name,
+                quantity_string,
+                resource_name,
+                self.due_date.strftime('%Y-%m-%d'),          
+                prep,
+                name2,
+            ])
+        else:
+            return ' '.join([
+                self.process.name,
+                self.relationship.name,
+                quantity_string,
+                resource_name,
+                self.due_date.strftime('%Y-%m-%d'),          
         ])
+
+    def label(self):
+        return self.relationship.get_direction_display()
+
+    def feature_label(self):
+        if not self.order:
+            return ""
+        features = self.resource_type.features.all()
+        if not features:
+            return ""
+        if features.count() == 1:
+            return " ".join(["with feature", features[0].name])
+        else:
+            names = ', '.join([feature.name for feature in features])    
+            return " ".join(["with features", names])    
 
     def save(self, *args, **kwargs):
         from_id = "Unassigned"
@@ -959,6 +1133,19 @@ class Reciprocity(models.Model):
             raise ValidationError('Initiating commitment from_agent must be the reciprocal commitment to_agent.')
         if self.initiating_commitment.to_agent.id != self.reciprocal_commitment.from_agent.id:
             raise ValidationError('Initiating commitment to_agent must be the reciprocal commitment from_agent.')
+
+
+class SelectedOption(models.Model):
+    commitment = models.ForeignKey(Commitment, 
+        related_name="options", verbose_name=_('commitment'))
+    option = models.ForeignKey(Option, 
+        related_name="commitments", verbose_name=_('option'))
+
+    class Meta:
+        ordering = ('commitment', 'option')
+
+    def __unicode__(self):
+        return " ".join([self.option.name, "option for", self.commitment.resource_type.name])
 
 
 class EconomicEvent(models.Model):
