@@ -34,8 +34,7 @@ def projects(request):
     }, context_instance=RequestContext(request))
 
 def resource_types(request):
-    cat = Category.objects.get(name="Type of work")
-    roots = EconomicResourceType.objects.exclude(category=cat)
+    roots = EconomicResourceType.objects.exclude(materiality="work")
     #roots = EconomicResourceType.objects.all()
     create_form = EconomicResourceTypeForm()
     categories = Category.objects.all()
@@ -114,8 +113,7 @@ def log_time(request):
         member = "Unregistered"
     form = TimeForm()
     roots = Project.objects.filter(parent=None)
-    cat = Category.objects.get(name="Type of work")
-    resource_types = EconomicResourceType.objects.filter(category=cat)
+    resource_types = EconomicResourceType.objects.filter(materiality="work")
     #resource_types = EconomicResourceType.objects.all()
     return render_to_response("valueaccounting/log_time.html", {
         "member": member,
@@ -644,7 +642,7 @@ def timeline(request):
     timeline_date = datetime.date.today().strftime("%b %e %Y 00:00:00 GMT-0600")
     unassigned = Commitment.objects.filter(
         from_agent=None,
-        resource_type__materiality="time-based").order_by("due_date")
+        resource_type__materiality="work").order_by("due_date")
     return render_to_response("valueaccounting/timeline.html", {
         "timeline_date": timeline_date,
         "unassigned": unassigned,
@@ -669,8 +667,8 @@ def json_resource_type_unit(request, resource_type_id):
     return HttpResponse(data, mimetype="text/json-comment-filtered")
 
 def create_order(request):
-    cat = Category.objects.get(name='Product')
-    rts = cat.resource_types.all()
+    cats = Category.objects.filter(orderable=True)
+    rts = EconomicResourceType.objects.filter(category__in=cats)
     item_forms = []
     data = request.POST or None
     order_form = OrderForm(data=data)
@@ -803,7 +801,7 @@ def schedule_commitment(commitment, schedule, reqs, work, depth):
         else:
             if resource_type.materiality == 'material':
                 reqs.append(inp)
-            elif resource_type.materiality == 'time-based':
+            elif resource_type.materiality == 'work':
                 work.append(inp)
             for art in resource_type.producing_agent_relationships():
                 art.depth = (depth + 1) * 2
@@ -843,7 +841,7 @@ def supply(request):
 
 def work(request):
     work = []
-    commitments = Commitment.objects.filter(resource_type__materiality="time-based")
+    commitments = Commitment.objects.filter(resource_type__materiality="work")
     for commitment in commitments:
         if not commitment.resource_type.producing_commitments():
             work.append(commitment)

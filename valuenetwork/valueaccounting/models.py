@@ -94,6 +94,8 @@ class Category(models.Model):
     applies_to = models.CharField(_('applies to'), max_length=128, 
         choices=CATEGORIZATION_CHOICES)
     description = models.TextField(_('description'), blank=True, null=True)
+    orderable = models.BooleanField(_('orderable'), default=False,
+        help_text=_('Should appear in Order form?'))
 
     class Meta:
         verbose_name_plural = 'categories'
@@ -271,14 +273,14 @@ class EventType(models.Model):
 MATERIALITY_CHOICES = (
     ('material', _('material')),
     ('intellectual', _('intellectual')),
-    ('time-based', _('time-based')),
+    ('work', _('work')),
+    ('tool', _('tool')),
 )
 
 class EconomicResourceTypeManager(models.Manager):
 
     def types_of_work(self):
-        cat = Category.objects.get(name="Type of work")
-        return EconomicResourceType.objects.filter(category=cat)
+        return EconomicResourceType.objects.filter(materiality="work")
 
 
 
@@ -754,7 +756,7 @@ class ProcessTypeResourceType(models.Model):
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm, LaborInputForm
         #todo: hack based on user-changeable string
-        if self.resource_type.category.name == "Type of work":
+        if self.resource_type.materiality == "work":
             return LaborInputForm(instance=self, prefix=self.xbill_change_prefix())
         else:
             return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())

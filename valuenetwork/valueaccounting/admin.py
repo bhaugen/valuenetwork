@@ -9,7 +9,7 @@ admin.site.register(AgentType)
 
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'applies_to', 'description' )
+    list_display = ('name', 'applies_to', 'description','orderable' )
 
 admin.site.register(Category, CategoryAdmin)
 
