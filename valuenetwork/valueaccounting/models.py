@@ -700,7 +700,10 @@ class ProcessTypeResourceType(models.Model):
         ordering = ('resource_type',)
 
     def __unicode__(self):
-        return " ".join([self.process_type.name, self.relationship.name, str(self.quantity), self.resource_type.name])        
+        relname = ""
+        if self.relationship:
+            relname = self.relationship.name
+        return " ".join([self.process_type.name, relname, str(self.quantity), self.resource_type.name])        
 
     def inverse_label(self):
         return self.relationship.inverse_label()

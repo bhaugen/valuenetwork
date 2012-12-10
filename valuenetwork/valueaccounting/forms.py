@@ -44,7 +44,7 @@ class OptionsForm(forms.Form):
 
     options = forms.CharField(
         label=_("Options"),
-        required=True,
+        required=False,
         widget=forms.CheckboxSelectMultiple(),
     )
 
@@ -125,7 +125,10 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
         queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
+    quantity = forms.DecimalField(required=False,
+        widget=forms.TextInput(attrs={'value': '0.0',}))
     unit_of_quantity = forms.ModelChoiceField(
+        required = False,
         queryset=Unit.objects.all(),  
         widget=SelectWithPopUp(model=Unit))
 
@@ -145,6 +148,8 @@ class LaborInputForm(forms.ModelForm):
         queryset=ResourceRelationship.objects.exclude(direction='out'), 
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
+    quantity = forms.DecimalField(required=False,
+        widget=forms.TextInput(attrs={'value': '0.0',}))
     unit_of_quantity = forms.ModelChoiceField(
         queryset=Unit.objects.filter(unit_type='time'),  
         widget=SelectWithPopUp(model=Unit))

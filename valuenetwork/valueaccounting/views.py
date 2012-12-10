@@ -316,6 +316,8 @@ def change_resource_type(request, resource_type_id):
             else:
                 return HttpResponseRedirect('/%s/%s/'
                     % ('accounting/edit-xbomfg', resource_type_id))
+        else:
+            raise ValidationError(form.errors)
 
 @login_required
 def delete_resource_type_confirmation(request, resource_type_id):
@@ -507,8 +509,11 @@ def change_options_for_feature(request, feature_id):
         ft = get_object_or_404(Feature, pk=feature_id)
         form = OptionsForm(feature=ft, data=request.POST)
         if form.is_valid():
-            selected_options = eval(form.cleaned_data["options"])
-            selected_options = [int(opt) for opt in selected_options]
+            options = form.cleaned_data["options"]
+            selected_options = []
+            if options:
+                selected_options = eval(form.cleaned_data["options"])
+                selected_options = [int(opt) for opt in selected_options]
             previous_options = ft.options.all()
             previous_ids = ft.options.values_list('component__id', flat=True)
             for option in previous_options:
