@@ -2,7 +2,7 @@
 
 {% load i18n %}
 
-{% block head_title %}{% trans "Schedule for " %}{{ order }}{% endblock %}
+{% block head_title %}{% trans "Confirm deletion of " %}{{ order }}{% endblock %}
 
 {% block body_class %}projects{% endblock %}
 
@@ -10,9 +10,11 @@
     <div class="container">
         {% include "_messages.html" %}
 	<div>
-		<legend>{% trans "Schedule for " %}{{ order }}</legend>
+		<legend>{% trans "Are you sure you want to delete " %}{{ order }}?</legend>
+		
+		<h3>{% trans "The following objects will be also deleted" %}:</h3>
 
-            <h3>Order Items:</h3>
+            <h3 style="margin-top: 1em;" >Order Items:</h3>
 			<ul>
 		        {% for item in order.producing_commitments %}
 					<li>{{ item.quantity }} {{ item.unit_of_quantity }} {{ item.resource_type }} {{ item.feature_label }}</li>
@@ -80,6 +82,17 @@
 				</div>
 
 			</div>
+
+		<div>
+	<form style="display: inline;" action="{% url delete_order order_id=order.id %}" method="POST">
+		{% csrf_token %}
+    		<input type="submit" value="{% trans 'Delete' %}" class="btn btn-warning" />
+	</form>
+	<form style="display: inline;" action="{% url demand %}" method="GET">
+    		<input type="submit" value="{% trans 'Cancel' %}" class="btn btn-info" />
+    </form>
+
+	</div>
 
 	</div>
     </div>

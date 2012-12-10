@@ -351,6 +351,59 @@ def delete_resource_type(request, resource_type_id):
                 % ('accounting/resources'))
 
 @login_required
+def delete_order_confirmation(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    if order.producing_commitments():
+        sked = []
+        reqs = []
+        work = []
+        tools = []
+        for ct in order.producing_commitments():
+            schedule_commitment(ct, sked, reqs, work, tools, 0)
+            return render_to_response('valueaccounting/order_delete_confirmation.html', {
+                "order": order,
+                "sked": sked,
+                "reqs": reqs,
+                "work": work,
+                "tools": tools,
+            }, context_instance=RequestContext(request))
+    else:
+        order.delete()
+        return HttpResponseRedirect('/%s/'
+            % ('accounting/demand'))
+
+@login_required
+def delete_order(request, order_id):
+    #import pdb; pdb.set_trace()
+    if request.method == "POST":
+        order = get_object_or_404(Order, pk=order_id)
+        trash = []
+        for ct in order.producing_commitments():
+            collect_trash(ct, trash)
+            order.delete()
+            for item in trash:
+                item.delete()
+        next = request.POST.get("next")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect('/%s/'
+                % ('accounting/demand'))
+
+def collect_trash(commitment, trash):
+    order = commitment.independent_demand
+    process = commitment.process
+    trash.append(process)
+    for inp in process.incoming_commitments():
+        resource_type = inp.resource_type
+        pcs = resource_type.producing_commitments()
+        if pcs:
+            for pc in pcs:
+                if pc.independent_demand == order:
+                    collect_trash(pc, trash)
+    return trash
+
+@login_required
 def delete_process_input(request, 
         process_input_id, resource_type_id):
     pi = get_object_or_404(ProcessTypeResourceType, pk=process_input_id)
@@ -791,7 +844,13 @@ def create_order(request):
         "item_forms": item_forms,
     }, context_instance=RequestContext(request))
 
-def schedule_commitment(commitment, schedule, reqs, work, depth):
+def schedule_commitment(
+        commitment, 
+        schedule, 
+        reqs, 
+        work, 
+        tools, 
+        depth):
     order = commitment.independent_demand
     commitment.depth = depth * 2
     schedule.append(commitment)
@@ -807,12 +866,14 @@ def schedule_commitment(commitment, schedule, reqs, work, depth):
         if pcs:
             for pc in pcs:
                 if pc.independent_demand == order:
-                    schedule_commitment(pc, schedule, reqs, work, depth+1)
-        else:
+                    schedule_commitment(pc, schedule, reqs, work, tools, depth+1)
+        elif inp.independent_demand == order:
             if resource_type.materiality == 'material':
                 reqs.append(inp)
             elif resource_type.materiality == 'work':
                 work.append(inp)
+            elif resource_type.materiality == 'tool':
+                tools.append(inp)
             for art in resource_type.producing_agent_relationships():
                 art.depth = (depth + 1) * 2
                 schedule.append(art)
@@ -824,13 +885,15 @@ def order_schedule(request, order_id):
     sked = []
     reqs = []
     work = []
+    tools = []
     for ct in order.producing_commitments():
-        schedule_commitment(ct, sked, reqs, work, 0)
+        schedule_commitment(ct, sked, reqs, work, tools, 0)
     return render_to_response("valueaccounting/order_schedule.html", {
         "order": order,
         "sked": sked,
         "reqs": reqs,
         "work": work,
+        "tools": tools,
     }, context_instance=RequestContext(request))
 
 def demand(request):

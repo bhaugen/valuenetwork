@@ -20,7 +20,10 @@
 		        <h3 style="margin-bottom: 4px;" >Open Orders:</h3>
 				<ul>
 				    {% for order in orders %}
-						<li><a href="{% url order_schedule order_id=order.id %}">{{ order }}</a></li>
+						<li>
+                            <a href="{% url order_schedule order_id=order.id %}">{{ order }}</a> 
+                            <a class="btn btn-warning" href="{% url delete_order_confirmation order_id=order.id %}">Delete</a>
+                        </li>
 					{% endfor %}
 				</ul>
 			{% endif %}
