@@ -126,7 +126,7 @@ class ProcessTypeResourceTypeForm(forms.ModelForm):
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
     quantity = forms.DecimalField(required=False,
-        widget=forms.TextInput(attrs={'value': '0.0',}))
+        widget=forms.TextInput(attrs={'value': '0.0', 'class': 'quantity'}))
     unit_of_quantity = forms.ModelChoiceField(
         required = False,
         queryset=Unit.objects.all(),  
@@ -149,7 +149,7 @@ class LaborInputForm(forms.ModelForm):
         empty_label=None, 
         widget=SelectWithPopUp(model=ResourceRelationship))
     quantity = forms.DecimalField(required=False,
-        widget=forms.TextInput(attrs={'value': '0.0',}))
+        widget=forms.TextInput(attrs={'value': '0.0', 'class': 'quantity'}))
     unit_of_quantity = forms.ModelChoiceField(
         queryset=Unit.objects.filter(unit_type='time'),  
         widget=SelectWithPopUp(model=Unit))

@@ -302,9 +302,9 @@ class EconomicResourceType(models.Model):
     description = models.TextField(_('description'), blank=True, null=True)
     rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2, default=Decimal("0.00"))
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
-        related_name='resource_types_created', blank=True, null=True)
+        related_name='resource_types_created', blank=True, null=True, editable=False)
     changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
-        related_name='resource_types_changed', blank=True, null=True)
+        related_name='resource_types_changed', blank=True, null=True, editable=False)
     slug = models.SlugField(_("Page name"), editable=False)
     
     objects = EconomicResourceTypeManager()
@@ -563,7 +563,8 @@ class AgentResourceType(models.Model):
 
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import AgentResourceTypeForm
-        return AgentResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
+        #return AgentResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
+        return AgentResourceTypeForm(instance=self)
 
 
 class Project(models.Model):
@@ -671,7 +672,8 @@ class ProcessType(models.Model):
 
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import ChangeProcessTypeForm
-        return ChangeProcessTypeForm(instance=self, prefix=self.xbill_change_prefix())
+        #return ChangeProcessTypeForm(instance=self, prefix=self.xbill_change_prefix())
+        return ChangeProcessTypeForm(instance=self)
 
     def xbill_input_prefix(self):
         return "".join(["PTINPUT", str(self.id)])
@@ -679,6 +681,7 @@ class ProcessType(models.Model):
     def xbill_input_form(self):
         from valuenetwork.valueaccounting.forms import ProcessTypeResourceTypeForm
         return ProcessTypeResourceTypeForm(prefix=self.xbill_input_prefix())
+        #return ProcessTypeResourceTypeForm()
 
     def xbill_class(self):
         return "process-type"
@@ -762,8 +765,10 @@ class ProcessTypeResourceType(models.Model):
         #todo: hack based on user-changeable string
         if self.resource_type.materiality == "work":
             return LaborInputForm(instance=self, prefix=self.xbill_change_prefix())
+            #return LaborInputForm(instance=self)
         else:
             return ProcessTypeResourceTypeForm(instance=self, prefix=self.xbill_change_prefix())
+            #return ProcessTypeResourceTypeForm(instance=self)
 
 
 class Process(models.Model):
@@ -899,7 +904,8 @@ class Feature(models.Model):
 
     def xbill_change_form(self):
         from valuenetwork.valueaccounting.forms import FeatureForm
-        return FeatureForm(instance=self, prefix=self.xbill_change_prefix())
+        #return FeatureForm(instance=self, prefix=self.xbill_change_prefix())
+        return FeatureForm(instance=self)
 
 
 class Option(models.Model):
@@ -1017,9 +1023,9 @@ class Commitment(models.Model):
     unit_of_value = models.ForeignKey(Unit, blank=True, null=True,
         verbose_name=_('unit of value'), related_name="commitment_value_units")
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
-        related_name='commitments_created', blank=True, null=True)
+        related_name='commitments_created', blank=True, null=True, editable=False)
     changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
-        related_name='commitments_changed', blank=True, null=True)
+        related_name='commitments_changed', blank=True, null=True, editable=False)
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:
@@ -1198,9 +1204,9 @@ class EconomicEvent(models.Model):
     commitment = models.ForeignKey(Commitment, blank=True, null=True,
         verbose_name=_('fulfills commitment'), related_name="fulfillment_events")
     created_by = models.ForeignKey(User, verbose_name=_('created by'),
-        related_name='events_created', blank=True, null=True)
+        related_name='events_created', blank=True, null=True, editable=False)
     changed_by = models.ForeignKey(User, verbose_name=_('changed by'),
-        related_name='events_changed', blank=True, null=True)
+        related_name='events_changed', blank=True, null=True, editable=False)
     slug = models.SlugField(_("Page name"), editable=False)
 
     class Meta:

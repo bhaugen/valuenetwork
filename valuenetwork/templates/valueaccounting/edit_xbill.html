@@ -519,6 +519,8 @@ ul {
 
 	$(document).ready(function(){
 
+		$.validator.addClassRules("quantity", { required: true, number: true });
+
 		$(".resource-type-selector").change(getUnit);
 
 		function getUnit(event)
@@ -543,6 +545,9 @@ ul {
 					},
 					url: {
 						url: true
+					},
+					rate: {
+						number: true
 					},
 				},
 				highlight: function(label) {
@@ -610,6 +615,9 @@ ul {
 					value: {
 						number: true
 					},
+					score: {
+						number: true
+					},
 				},
 				highlight: function(label) {
 					$(label).closest('.control-group').addClass('error');
@@ -630,6 +638,9 @@ ul {
 						number: true
 					},
 					value: {
+						number: true
+					},
+					score: {
 						number: true
 					},
 				},
@@ -702,11 +713,6 @@ ul {
 		$('.input-form').each( function(){
 			var form = $(this);
 			form.validate({
-				rules: {
-					quantity: {
-						number: true
-					},
-				},
 				highlight: function(label) {
 					$(label).closest('.control-group').addClass('error');
 				},
@@ -716,6 +722,7 @@ ul {
 						.closest('.control-group').addClass('success');
 				}
 			});
+
 		});
 
 		$('.change-input-form').each( function(){

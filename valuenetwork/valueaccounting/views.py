@@ -505,6 +505,7 @@ def create_process_type_input(request, process_type_id):
         pt = get_object_or_404(ProcessType, pk=process_type_id)
         prefix = pt.xbill_input_prefix()
         form = ProcessTypeResourceTypeForm(request.POST, prefix=prefix)
+        #form = ProcessTypeResourceTypeForm(request.POST)
         if form.is_valid():
             ptrt = form.save(commit=False)
             ptrt.process_type=pt
@@ -595,6 +596,9 @@ def change_process_type_input(request, input_id):
             data=request.POST, 
             instance=ptrt,
             prefix=prefix)
+        #form = ProcessTypeResourceTypeForm(
+        #    data=request.POST, 
+        #    instance=ptrt)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
@@ -604,10 +608,12 @@ def change_process_type_input(request, input_id):
 
 @login_required
 def change_agent_resource_type(request, agent_resource_type_id):
+    #import pdb; pdb.set_trace()
     if request.method == "POST":
         art = get_object_or_404(AgentResourceType, pk=agent_resource_type_id)
-        prefix = art.xbill_change_prefix()
-        form = AgentResourceTypeForm(data=request.POST, instance=art, prefix=prefix)
+        #prefix = art.xbill_change_prefix()
+        #form = AgentResourceTypeForm(data=request.POST, instance=art, prefix=prefix)
+        form = AgentResourceTypeForm(data=request.POST, instance=art)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
@@ -619,8 +625,9 @@ def change_agent_resource_type(request, agent_resource_type_id):
 def change_feature(request, feature_id):
     if request.method == "POST":
         ft = get_object_or_404(Feature, pk=feature_id)
-        prefix = ft.xbill_change_prefix()
-        form = FeatureForm(data=request.POST, instance=ft, prefix=prefix)
+        #prefix = ft.xbill_change_prefix()
+        #form = FeatureForm(data=request.POST, instance=ft, prefix=prefix)
+        form = FeatureForm(data=request.POST, instance=ft)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
@@ -649,8 +656,9 @@ def change_process_type(request, process_type_id):
     #import pdb; pdb.set_trace()
     if request.method == "POST":
         pt = get_object_or_404(ProcessType, pk=process_type_id)
-        prefix = pt.xbill_change_prefix()
-        form = ChangeProcessTypeForm(request.POST, instance=pt, prefix=prefix)
+        #prefix = pt.xbill_change_prefix()
+        #form = ChangeProcessTypeForm(request.POST, instance=pt, prefix=prefix)
+        form = ChangeProcessTypeForm(request.POST, instance=pt)
         if form.is_valid():
             form.save()
             next = request.POST.get("next")
