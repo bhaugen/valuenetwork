@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from valuenetwork.tekextensions.widgets import SelectWithPopUp
 
 from valuenetwork.valueaccounting.models import *
+from valuenetwork.valueaccounting.widgets import DurationWidget
 
 
 class OrderForm(forms.ModelForm):
@@ -95,6 +96,9 @@ class AgentResourceTypeForm(forms.ModelForm):
 
 class XbillProcessTypeForm(forms.ModelForm):
     quantity = forms.DecimalField(max_digits=8, decimal_places=2)
+    estimated_duration = forms.IntegerField(required=False,
+        widget=DurationWidget,
+        help_text="days, hours, minutes")
 
     class Meta:
         model = ProcessType
@@ -102,6 +106,9 @@ class XbillProcessTypeForm(forms.ModelForm):
 
 
 class ChangeProcessTypeForm(forms.ModelForm):
+    estimated_duration = forms.IntegerField(required=False,
+        widget=DurationWidget,
+        help_text="days, hours, minutes")
 
     class Meta:
         model = ProcessType

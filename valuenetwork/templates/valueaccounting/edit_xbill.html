@@ -66,8 +66,12 @@ ul {
 
 .btn-info {
 	margin-top: 2px;
-
 }
+
+.days, .hours, .minutes {
+	width: 24px;
+}
+
 </style>
 {% endblock %}
 
@@ -520,6 +524,17 @@ ul {
 	$(document).ready(function(){
 
 		$.validator.addClassRules("quantity", { required: true, number: true });
+		$.validator.addClassRules("days", { number: true });
+		$.validator.addClassRules("hours", { 
+			number: true,
+			min: 0,
+			max: 24
+		});
+		$.validator.addClassRules("minutes", { 
+			number: true,
+			min: 0,
+			max: 60
+		});
 
 		$(".resource-type-selector").change(getUnit);
 
