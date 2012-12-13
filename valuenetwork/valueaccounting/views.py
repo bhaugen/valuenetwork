@@ -718,13 +718,15 @@ def json_timeline(request):
     #data = "{ 'wiki-url':'http://simile.mit.edu/shelf/', 'wiki-section':'Simile JFK Timeline', 'dateTimeFormat': 'Gregorian','events': [{'start':'May 28 2006 09:00:00 GMT-0600','title': 'Writing Timeline documentation','link':'http://google.com','description':'Write some doc already','durationEvent':false }, {'start': 'Jun 16 2006 00:00:00 GMT-0600' ,'end':  'Jun 26 2006 00:00:00 GMT-0600' ,'durationEvent':true,'title':'Friends wedding'}]}"
     #import pdb; pdb.set_trace()
     orders = Order.objects.all()
-    processes = []
-    for order in orders:
-        for commitment in order.producing_commitments():
-            processes.append(commitment.process)
+    #processes = []
+    #for order in orders:
+    #    for commitment in order.producing_commitments():
+    #        processes.append(commitment.process)
     events = {'dateTimeFormat': 'Gregorian','events':[]}
-    for process in processes:
-        backshedule_events(process, events)
+    #for process in processes:
+    #    backshedule_events(process, events)
+    for order in orders:
+        backshedule_order(order, events)
     data = simplejson.dumps(events, ensure_ascii=False)
     return HttpResponse(data, mimetype="text/json-comment-filtered")
 
