@@ -133,8 +133,7 @@ def backschedule_process_types(commitment, process_type,events):
     for crt in process_type.consumed_resource_types():
         explode_events(crt, start_date, events)
 
-
-def backshedule_events(process, events):
+def backschedule_process(order, process, events):
     te = TimelineEvent(
         process,
         process.start_date,
@@ -154,10 +153,45 @@ def backshedule_events(process, events):
             ic.description,
         )
         events['events'].append(te.dictify())
-        for pp in ic.resource_type.producing_process_types():
-            backschedule_process_types(ic, pp,events)
+        resource_type = ic.resource_type
+        pcs = resource_type.producing_commitments()
+        if pcs:
+            for pc in pcs:
+                if pc.independent_demand == order:
+                    te = TimelineEvent(
+                        pc,
+                        pc.due_date,
+                        "",
+                        pc.timeline_title(),
+                        pc.url,
+                        pc.description,
+                    )
+                    events['events'].append(te.dictify())
+                    backschedule_process(order, pc.process, events)
 
     return events
+
+def backschedule_order(order, events):
+    te = TimelineEvent(
+        order,
+        order.due_date,
+        "",
+        order.timeline_title(),
+        "",
+        order.description,
+    )
+    events['events'].append(te.dictify())
+    for pc in order.producing_commitments():
+        te = TimelineEvent(
+            pc,
+            pc.due_date,
+            "",
+            pc.timeline_title(),
+            pc.url,
+            pc.description,
+        )
+        events['events'].append(te.dictify())
+        backschedule_process(order, pc.process, events)
 
 def generate_schedule(process, order, user):
     pt = process.process_type

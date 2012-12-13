@@ -246,22 +246,23 @@ def extended_bill(request, resource_type_id):
                 select_all = True
             else:
                 select_all = False
-        selected_nodes = []
         for node in nodes:
+            node.show = False
             if node.depth <= selected_depth:
                 if select_all:
-                    selected_nodes.append(node)
+                    node.show = True
                 else:
                     cat = node.category()
                     if cat.name in cats:
-                        selected_nodes.append(node)
-
-        nodes = selected_nodes
+                        node.show = True
+                    else:
+                        node.show = False
     else:
         nodes = generate_xbill(rt)
         depth = 0
         for node in nodes:
             depth = max(depth, node.depth)
+            node.show = True
         selected_depth = depth
         select_all = True
         selected_cats = "all"
@@ -724,9 +725,9 @@ def json_timeline(request):
     #        processes.append(commitment.process)
     events = {'dateTimeFormat': 'Gregorian','events':[]}
     #for process in processes:
-    #    backshedule_events(process, events)
+    #    backschedule_events(process, events)
     for order in orders:
-        backshedule_order(order, events)
+        backschedule_order(order, events)
     data = simplejson.dumps(events, ensure_ascii=False)
     return HttpResponse(data, mimetype="text/json-comment-filtered")
 

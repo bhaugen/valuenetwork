@@ -31,6 +31,15 @@ ul {
 	font-weight: bold;
 }
 
+.xb-invisible ul {
+	margin-top: .1em;
+}
+
+.xb-invisible li {
+	border: 1px solid gainsboro; 
+	padding: .1em 1em .1em 1em;
+}
+
 .economic-resource-type {
 	background-color: lightyellow;
 }
@@ -98,10 +107,15 @@ ul {
 				{% endif %}
 		
 				{% if node.open %}
+					{% if node.show %}
 						<ul class="xb" >
+					{% else %}
+						<ul class="xb-invisible">
+					{% endif %}
 				{% endif %}
 
-				<li  class="xb  {{ node.xbill_class }}" >
+				{% if node.show %}
+					<li  class="xb  {{ node.xbill_class }}" >
 {% comment %}
                     <p>Open: {{ node.open }} Close: {{ node.close }}</p>
 {% endcomment %}
@@ -119,6 +133,9 @@ ul {
 					{% if node.xbill_object.description %}
 						<div class="description" >{{ node.xbill_object.description|urlize|linebreaks }}</div>
 					{% endif %}
+				{% else %}
+					<li  class="xb-invisible  {{ node.xbill_class }}" >
+				{% endif %}
 
 				{% for close in node.close %}
 					</li>

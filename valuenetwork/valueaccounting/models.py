@@ -974,6 +974,9 @@ class Order(models.Model):
             self.due_date.strftime('%Y-%m-%d'),
             ])
 
+    def timeline_title(self):
+        return self.__unicode__()
+
     def producing_commitments(self):
         return self.commitments.all()
 

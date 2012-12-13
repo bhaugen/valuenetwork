@@ -32,7 +32,7 @@
         {% include "_messages.html" %}
 		<h1>{% trans "Timeline" %}</h1>
 		<p>{% trans "Double-click on months to slide days. Click on event in day to show details." %}</p>	
-		<div id="my-timeline" style="height: 300px; border: 1px solid #aaa"></div>
+		<div id="my-timeline" style="height: 500px; border: 1px solid #aaa"></div>
 
 		{% if unassigned %}
 			<div style="margin-top: 1em;" >
@@ -91,7 +91,7 @@ $(document).ready(function() {
      Timeline.createBandInfo({
          eventSource:    eventSource,
          date:           "{{ timeline_date }}",
-         width:          "70%", 
+         width:          "85%", 
          intervalUnit:   Timeline.DateTime.DAY, 
          intervalPixels: 100
      }),
@@ -99,7 +99,7 @@ $(document).ready(function() {
          overview:       true,
          eventSource:    eventSource,
          date:           "{{ timeline_date }}",
-         width:          "30%", 
+         width:          "15%", 
          intervalUnit:   Timeline.DateTime.MONTH, 
          intervalPixels: 200
      })
