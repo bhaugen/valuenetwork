@@ -293,7 +293,7 @@ def generate_xbill(resource_type):
     #import pdb; pdb.set_trace()
     to_return = []
     for kid in resource_type.xbill_children():
-        to_return.extend(xbill_dfs(kid, nodes, 0))
+        to_return.extend(xbill_dfs(kid, nodes, 1))
     annotate_tree_properties(to_return)
     #to_return.sort(lambda x, y: cmp(x.xbill_object().name,
     #                                y.xbill_object().name))

@@ -234,7 +234,7 @@ def extended_bill(request, resource_type_id):
     categories = Category.objects.all()
     if request.method == "POST":
         nodes = generate_xbill(rt)
-        depth = 0
+        depth = 1
         for node in nodes:
             depth = max(depth, node.depth)
         selected_cats = request.POST["categories"]
@@ -255,11 +255,9 @@ def extended_bill(request, resource_type_id):
                     cat = node.category()
                     if cat.name in cats:
                         node.show = True
-                    else:
-                        node.show = False
     else:
         nodes = generate_xbill(rt)
-        depth = 0
+        depth = 1
         for node in nodes:
             depth = max(depth, node.depth)
             node.show = True

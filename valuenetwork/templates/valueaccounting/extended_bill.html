@@ -180,6 +180,7 @@ ul {
 	$(document).ready(function(){
 
 		var selectedCats = "{{ selected_cats }}";
+                $('#categories').prop('value', selectedCats);
 
 		$('.category').each(function()
 		{
@@ -223,7 +224,7 @@ ul {
 		var selected_depth = {{ selected_depth }};
 
 		$(function() {
-		    var spinner = $( "#spinner" ).spinner({ min: 0, max: depth, width: 3 });
+		    var spinner = $( "#spinner" ).spinner({ min: 1, max: depth, width: 3 });
 			spinner.spinner( "value", selected_depth );	 
 
 		    $( "#disable" ).click(function() {
