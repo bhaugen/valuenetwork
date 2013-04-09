@@ -1,6 +1,11 @@
 valuenetwork
 =====================
 
+##############################################
+Important, the main project has moved to https://github.com/valnet/valuenetwork
+##############################################
+
+
 A prototype of Value Network Accounting, being developed in collaboration with http://www.sensorica.co/ , a pioneering value network.
 
 Background on Value Networks: http://www.sensorica.co/value-networks
